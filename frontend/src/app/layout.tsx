@@ -1,34 +1,40 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type React from "react"
+import type { Metadata } from "next"
+import { Geist } from "next/font/google"
+import { Manrope } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider"
+import "./globals.css"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const geist = Geist({
   subsets: ["latin"],
-});
+  display: "swap",
+  variable: "--font-geist",
+})
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const manrope = Manrope({
   subsets: ["latin"],
-});
+  display: "swap",
+  variable: "--font-manrope",
+})
 
 export const metadata: Metadata = {
-  title: "Sistema de Seguimiento Personal",
-  description: "Aplicación para realizar seguimiento en tiempo real de aspectos importantes de tu vida",
-};
+  title: "Personal Tracker - Tu Sistema de Seguimiento Personal",
+  description: "Rastrea hábitos, metas y métricas de bienestar con gamificación motivacional",
+  generator: "v0.app",
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
-      >
-        {children}
+    <html lang="es" className={`${geist.variable} ${manrope.variable} antialiased`}>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }
