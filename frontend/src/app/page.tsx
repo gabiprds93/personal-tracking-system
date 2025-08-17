@@ -85,61 +85,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold font-sans">Personal Tracker</h1>
-                <p className="text-sm text-muted-foreground font-serif">
-                  Nivel {userStats.level} • {userStats.totalPoints} puntos
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/habits">
-                <Button variant="ghost" className="gap-2">
-                  <Settings className="w-4 h-4" />
-                  Hábitos
-                </Button>
-              </Link>
-              <Link href="/goals">
-                <Button variant="ghost" className="gap-2">
-                  <Flag className="w-4 h-4" />
-                  Metas
-                </Button>
-              </Link>
-              <Link href="/analytics">
-                <Button variant="ghost" className="gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Analytics
-                </Button>
-              </Link>
-              <Link href="/profile">
-                <Button variant="ghost" className="gap-2">
-                  <User className="w-4 h-4" />
-                  Perfil
-                </Button>
-              </Link>
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </Button>
-              <Link href="/habits">
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Nuevo Hábito
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="p-6 space-y-6">
         {/* Motivational Message */}
         <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
           <CardContent className="p-6 text-center">
