@@ -123,11 +123,26 @@ export const getHabits = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Add completion status to each habit based on updatedAt
-    const habitsWithCompletionStatus = habits.map(habit => ({
-      ...habit,
-      completed: habit.updatedAt >= today && habit.updatedAt < tomorrow,
-    }));
+    // Check completion status using HabitCompletion table
+    const habitsWithCompletionStatus = await Promise.all(
+      habits.map(async (habit) => {
+        const completion = await prisma.habitCompletion.findFirst({
+          where: {
+            habitId: habit.id,
+            userId: req.user!.id,
+            completedAt: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+        });
+
+        return {
+          ...habit,
+          completed: !!completion,
+        };
+      })
+    );
 
     const response: ApiResponse<Habit[]> = {
       success: true,
@@ -384,55 +399,74 @@ export const completeHabit = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if already completed today by checking if updatedAt is today
+    // Check if already completed today using HabitCompletion table
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Simple check: if the habit was updated today, consider it completed
-    if (habit.updatedAt >= today && habit.updatedAt < tomorrow) {
+    const existingCompletion = await prisma.habitCompletion.findFirst({
+      where: {
+        habitId: id,
+        userId: req.user.id,
+        completedAt: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+    });
+
+    if (existingCompletion) {
       return res.status(400).json({
         success: false,
         error: 'Habit already completed today',
       });
     }
 
-    // For now, we'll simulate the completion by just updating the habit's updatedAt field
-    // This is a workaround for the MongoDB replica set requirement
+    // Create completion record and update habit streak in a transaction
+    let completion;
     let updatedHabit;
+    
     try {
-      updatedHabit = await prisma.habit.update({
-        where: { id },
-        data: {
-          streak: {
-            increment: 1,
+      const result = await prisma.$transaction(async (tx) => {
+        // Create the completion record
+        const newCompletion = await tx.habitCompletion.create({
+          data: {
+            habitId: id,
+            userId: req.user.id,
+            completedAt: new Date(),
+            notes: notes || null,
           },
-          updatedAt: new Date(),
-        },
+        });
+
+        // Update habit streak
+        const updated = await tx.habit.update({
+          where: { id },
+          data: {
+            streak: {
+              increment: 1,
+            },
+          },
+        });
+
+        return { completion: newCompletion, habit: updated };
       });
+
+      completion = result.completion;
+      updatedHabit = result.habit;
     } catch (error) {
-      console.error('Error updating habit:', error);
+      console.error('Error completing habit:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to complete habit',
       });
     }
 
-    // Create a mock completion object for the response
-    const completion = {
-      id: 'mock-completion-' + Date.now(),
-      habitId: id,
-      userId: req.user.id,
-      completedAt: new Date(),
-      notes: notes || null,
-    };
-
     const response: ApiResponse = {
       success: true,
       data: {
         completion,
-        habit: updatedHabit || habit, // Use original habit if update failed
+        habit: updatedHabit,
       },
       message: 'Habit completed successfully',
     };
@@ -476,10 +510,26 @@ export const getTodayHabits = async (req: Request, res: Response) => {
       },
     });
 
-    const habitsWithCompletionStatus = habits.map(habit => ({
-      ...habit,
-      completed: habit.updatedAt >= today && habit.updatedAt < tomorrow,
-    }));
+    // Check completion status using HabitCompletion table
+    const habitsWithCompletionStatus = await Promise.all(
+      habits.map(async (habit) => {
+        const completion = await prisma.habitCompletion.findFirst({
+          where: {
+            habitId: habit.id,
+            userId: req.user!.id,
+            completedAt: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+        });
+
+        return {
+          ...habit,
+          completed: !!completion,
+        };
+      })
+    );
 
     const response: ApiResponse<Habit[]> = {
       success: true,
