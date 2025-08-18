@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Target, Flame, Activity, Award } from 'lucide-react';
+import { Target, Flame, Activity, Award, type LucideIcon } from 'lucide-react';
 import { analyticsApi } from '@/lib/api';
 import { 
   UseAnalyticsReturn, 
@@ -49,15 +49,15 @@ export const useAnalytics = (): UseAnalyticsReturn => {
         analyticsApi.getMetrics()
       ]);
 
-      if (trendsResponse.success && trendsResponse.data) {
+      if (trendsResponse.success && trendsResponse.data && Array.isArray(trendsResponse.data)) {
         setHabitTrendData(trendsResponse.data);
       }
 
-      if (categoriesResponse.success && categoriesResponse.data) {
+      if (categoriesResponse.success && categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
         setCategoryData(categoriesResponse.data);
       }
 
-      if (metricsResponse.success && metricsResponse.data) {
+      if (metricsResponse.success && metricsResponse.data && Array.isArray(metricsResponse.data)) {
         // Transform backend metrics to frontend format
         const transformedMetrics = metricsResponse.data.map((metric: any) => ({
           ...metric,
@@ -74,7 +74,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
   }, [timeRange]);
 
   // Helper function to map icon strings to components
-  const getIconComponent = (iconName: string) => {
+  const getIconComponent = (iconName: string): LucideIcon => {
     switch (iconName) {
       case 'check-circle':
       case 'target':
