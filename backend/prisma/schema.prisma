@@ -1,0 +1,228 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  username  String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  avatar    String?
+  timezone  String   @default("UTC")
+  language  String   @default("en")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  habits     Habit[]
+  goals      Goal[]
+  badges     UserBadge[]
+  challenges UserChallenge[]
+  analytics  UserAnalytics[]
+  notes      Note[]
+
+  @@map("users")
+}
+
+model Habit {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  name        String
+  description String?
+  category    String
+  points      Int      @default(10)
+  frequency   String   @default("daily") // daily, weekly, monthly
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completions HabitCompletion[]
+
+  @@map("habits")
+}
+
+model HabitCompletion {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  habitId   String   @db.ObjectId
+  userId    String   @db.ObjectId
+  completedAt DateTime @default(now())
+  notes     String?
+
+  // Relations
+  habit     Habit     @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, userId, completedAt])
+  @@map("habit_completions")
+}
+
+model Goal {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  title       String
+  description String?
+  category    String
+  targetDate  DateTime
+  progress    Int      @default(0) // 0-100
+  status      GoalStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones  Milestone[]
+  notes       Note[]
+
+  @@map("goals")
+}
+
+model Milestone {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  goalId      String    @db.ObjectId
+  title       String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  goal        Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@map("milestones")
+}
+
+model Note {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  goalId    String?  @db.ObjectId
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      Goal?    @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+model Badge {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String
+  icon        String
+  category    String
+  requirement String
+  points      Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users      UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  badgeId   String    @db.ObjectId
+  unlockedAt DateTime @default(now())
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge     @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model Challenge {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users      UserChallenge[]
+  tasks      ChallengeTask[]
+
+  @@map("challenges")
+}
+
+model ChallengeTask {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  challengeId String   @db.ObjectId
+  title       String
+  target      Int
+  points      Int      @default(0)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@map("challenge_tasks")
+}
+
+model UserChallenge {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  challengeId String   @db.ObjectId
+  progress    Int      @default(0)
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  joinedAt    DateTime @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@map("user_challenges")
+}
+
+model UserAnalytics {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  date            DateTime
+  totalPoints     Int      @default(0)
+  habitsCompleted Int      @default(0)
+  goalsCompleted  Int      @default(0)
+  streak          Int      @default(0)
+  completionRate  Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("user_analytics")
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  OVERDUE
+}
