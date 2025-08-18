@@ -73,22 +73,24 @@ app.use('*', (req, res) => {
 });
 
 // Global error handler
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction): void => {
   console.error('Global error handler:', error);
 
   if (error.name === 'ValidationError') {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: 'Validation error',
       details: error.message,
     });
+    return;
   }
 
   if (error.name === 'UnauthorizedError') {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       error: 'Unauthorized',
     });
+    return;
   }
 
   res.status(500).json({

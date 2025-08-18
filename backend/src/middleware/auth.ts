@@ -16,16 +16,17 @@ export const authenticateToken = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Access token required'
       });
+      return;
     }
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
@@ -44,23 +45,31 @@ export const authenticateToken = async (
     });
 
     if (!user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'User not found or inactive'
       });
+      return;
     }
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName || '',
+      lastName: user.lastName || ''
+    };
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid token'
       });
+      return;
     }
     
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: 'Authentication error'
     });

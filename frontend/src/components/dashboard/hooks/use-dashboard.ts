@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DashboardState, DashboardActions, UseDashboardReturn } from '../dashboard.types';
+import { dashboardApi } from '@/lib/api';
 
 const motivationalMessages = [
   "El progreso, no la perfección",
@@ -16,32 +17,49 @@ export const useDashboard = (): UseDashboardReturn => {
     currentMessageIndex: 0,
     celebrationVisible: false,
     userStats: {
-      totalPoints: 2847,
-      level: 12,
-      currentStreak: 7,
-      longestStreak: 23,
-      completionRate: 87,
-      todayCompleted: 4,
-      todayTotal: 6,
+      totalPoints: 0,
+      level: 1,
+      currentStreak: 0,
+      longestStreak: 0,
+      completionRate: 0,
+      todayCompleted: 0,
+      todayTotal: 0,
     },
-    todayHabits: [
-      { id: 1, name: "Ejercicio matutino", completed: true, category: "Salud", points: 15 },
-      { id: 2, name: "Leer 30 minutos", completed: true, category: "Aprendizaje", points: 10 },
-      { id: 3, name: "Meditar", completed: true, category: "Bienestar", points: 12 },
-      { id: 4, name: "Beber 8 vasos de agua", completed: true, category: "Salud", points: 8 },
-      { id: 5, name: "Escribir en diario", completed: false, category: "Bienestar", points: 10 },
-      { id: 6, name: "Estudiar programación", completed: false, category: "Aprendizaje", points: 20 },
-    ],
-    recentBadges: [
-      { name: "Racha de Fuego", description: "7 días consecutivos", icon: "🔥" },
-      { name: "Multitarea", description: "5+ hábitos en un día", icon: "⚡" },
-      { name: "Madrugador", description: "Ejercicio antes de las 7am", icon: "🌅" },
-    ],
+    todayHabits: [],
+    recentBadges: [],
   });
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load dashboard data
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { userStats, todayHabits } = await dashboardApi.getDashboardData();
+      
+      setState(prev => ({
+        ...prev,
+        userStats: userStats || prev.userStats,
+        todayHabits: todayHabits || prev.todayHabits,
+        mounted: true,
+      }));
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      setError('Error loading dashboard data');
+      // Keep mounted true even on error to show the UI
+      setState(prev => ({ ...prev, mounted: true }));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    setState(prev => ({ ...prev, mounted: true }));
+    loadDashboardData();
     
+    // Set up motivational message rotation
     const interval = setInterval(() => {
       setState(prev => ({
         ...prev,
@@ -50,23 +68,43 @@ export const useDashboard = (): UseDashboardReturn => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [loadDashboardData]);
 
   const actions: DashboardActions = {
-    toggleHabit: useCallback((habitId: number) => {
-      setState(prev => ({
-        ...prev,
-        todayHabits: prev.todayHabits.map(habit =>
-          habit.id === habitId ? { ...habit, completed: !habit.completed } : habit
-        ),
-        celebrationVisible: true,
-      }));
+    toggleHabit: useCallback(async (habitId: string) => {
+      try {
+        // Optimistic update
+        setState(prev => ({
+          ...prev,
+          todayHabits: prev.todayHabits.map(habit =>
+            habit.id === habitId ? { ...habit, completed: !habit.completed } : habit
+          ),
+          celebrationVisible: true,
+        }));
 
-      // Hide celebration after 2 seconds
-      setTimeout(() => {
-        setState(prev => ({ ...prev, celebrationVisible: false }));
-      }, 2000);
-    }, []),
+        // Make API call to toggle habit
+        await dashboardApi.toggleHabitCompletion(habitId);
+        
+        // Refresh data to get updated stats
+        await loadDashboardData();
+
+        // Hide celebration after 2 seconds
+        setTimeout(() => {
+          setState(prev => ({ ...prev, celebrationVisible: false }));
+        }, 2000);
+      } catch (error) {
+        console.error('Error toggling habit:', error);
+        // Revert optimistic update on error
+        setState(prev => ({
+          ...prev,
+          todayHabits: prev.todayHabits.map(habit =>
+            habit.id === habitId ? { ...habit, completed: !habit.completed } : habit
+          ),
+          celebrationVisible: false,
+        }));
+        setError('Error updating habit');
+      }
+    }, [loadDashboardData]),
 
     showCelebration: useCallback(() => {
       setState(prev => ({ ...prev, celebrationVisible: true }));
@@ -74,7 +112,11 @@ export const useDashboard = (): UseDashboardReturn => {
         setState(prev => ({ ...prev, celebrationVisible: false }));
       }, 2000);
     }, []),
+    
+    refreshData: useCallback(() => {
+      loadDashboardData();
+    }, [loadDashboardData]),
   };
 
-  return { state, actions };
+  return { state, actions, loading, error };
 };

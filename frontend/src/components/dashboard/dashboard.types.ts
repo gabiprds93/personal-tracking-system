@@ -8,14 +8,27 @@ export interface UserStats {
   completionRate: number;
   todayCompleted: number;
   todayTotal: number;
+  habitsCompleted?: number;
+  goalsCompleted?: number;
+  badgesEarned?: number;
+  joinedDate?: string;
 }
 
 export interface Habit {
-  id: number;
+  id: string;
   name: string;
-  completed: boolean;
+  completed?: boolean;
   category: string;
   points: number;
+  description?: string | null;
+  icon?: string | null;
+  difficulty?: number;
+  frequency?: string;
+  targetDays?: number[];
+  streak?: number;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Badge {
@@ -37,7 +50,7 @@ export interface MetricsGridProps extends HTMLAttributes<HTMLDivElement> {
 
 export interface TodayHabitsProps extends HTMLAttributes<HTMLDivElement> {
   habits: Habit[];
-  onHabitToggle: (habitId: number) => void;
+  onHabitToggle: (habitId: string) => void;
   className?: string;
 }
 
@@ -54,6 +67,8 @@ export interface CelebrationOverlayProps {
 export interface UseDashboardReturn {
   state: DashboardState;
   actions: DashboardActions;
+  loading: boolean;
+  error: string | null;
 }
 
 export interface DashboardState {
@@ -66,6 +81,7 @@ export interface DashboardState {
 }
 
 export interface DashboardActions {
-  toggleHabit: (habitId: number) => void;
+  toggleHabit: (habitId: string) => void;
   showCelebration: () => void;
+  refreshData: () => void;
 }

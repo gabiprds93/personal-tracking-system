@@ -19,7 +19,7 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const validatedData = registerSchema.parse(req.body);
     const { email, username, password, firstName, lastName } = validatedData;
@@ -32,10 +32,11 @@ export const register = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'User with this email or username already exists'
       });
+      return;
     }
 
     // Hash password
@@ -47,21 +48,8 @@ export const register = async (req: Request, res: Response) => {
         email,
         username,
         password: hashedPassword,
-        firstName,
-        lastName,
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        timezone: true,
-        language: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
+        firstName: firstName || null,
+        lastName: lastName || null,
       }
     });
 
@@ -79,8 +67,8 @@ export const register = async (req: Request, res: Response) => {
           id: user.id,
           email: user.email,
           username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
         },
         token,
       },
@@ -90,11 +78,12 @@ export const register = async (req: Request, res: Response) => {
     res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Validation error',
         details: error.errors,
       });
+      return;
     }
 
     console.error('Registration error:', error);
@@ -105,7 +94,7 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const validatedData = loginSchema.parse(req.body);
     const { email, password } = validatedData;
@@ -116,20 +105,22 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid credentials',
       });
+      return;
     }
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid credentials',
       });
+      return;
     }
 
     // Generate token
@@ -146,8 +137,8 @@ export const login = async (req: Request, res: Response) => {
           id: user.id,
           email: user.email,
           username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
         },
         token,
       },
@@ -157,11 +148,12 @@ export const login = async (req: Request, res: Response) => {
     res.json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Validation error',
         details: error.errors,
       });
+      return;
     }
 
     console.error('Login error:', error);
@@ -172,13 +164,14 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getProfile = async (req: Request, res: Response) => {
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'User not authenticated',
       });
+      return;
     }
 
     const response: ApiResponse<AuthUser> = {

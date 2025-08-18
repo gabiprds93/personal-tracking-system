@@ -129,3 +129,36 @@ export const analyticsApi = {
   getCategories: () => api.get('/analytics/categories'),
   getMetrics: () => api.get('/analytics/metrics'),
 };
+
+// Dashboard API methods - combines multiple endpoints for dashboard data
+export const dashboardApi = {
+  // Get all dashboard data in parallel
+  getDashboardData: async () => {
+    try {
+      const [userStats, todayHabits] = await Promise.all([
+        analyticsApi.getStats(),
+        habitsApi.getToday(),
+      ]);
+      
+      return {
+        userStats: userStats.data,
+        todayHabits: todayHabits.data,
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      throw error;
+    }
+  },
+  
+  // Toggle habit completion
+  toggleHabitCompletion: async (habitId: string) => {
+    return habitsApi.complete(habitId);
+  },
+  
+  // Get recent badges/achievements
+  getRecentBadges: async () => {
+    // This would need to be implemented in the backend
+    // For now, return empty array
+    return { success: true, data: [] };
+  },
+};

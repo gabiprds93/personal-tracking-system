@@ -1,5 +1,5 @@
 import Dashboard from "@/components/dashboard/dashboard";
-import { ProtectedRoute } from "@/components/auth";
+import { ProtectedRoute } from "@/components/auth/components";
 
 /**
  * DashboardPage - Main dashboard route component
