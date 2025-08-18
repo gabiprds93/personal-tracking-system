@@ -1,4 +1,5 @@
 import Profile from "@/components/profile/profile";
+import { ProtectedRoute } from "@/components/auth";
 
 /**
  * ProfilePage - Profile route component
@@ -7,5 +8,9 @@ import Profile from "@/components/profile/profile";
  * Keeps the page component clean and delegates to the actual Profile component.
  */
 export default function ProfilePage() {
-  return <Profile />;
+  return (
+    <ProtectedRoute>
+      <Profile />
+    </ProtectedRoute>
+  );
 }

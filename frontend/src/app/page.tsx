@@ -1,4 +1,5 @@
 import Dashboard from "@/components/dashboard/dashboard";
+import { ProtectedRoute } from "@/components/auth";
 
 /**
  * DashboardPage - Main dashboard route component
@@ -7,5 +8,9 @@ import Dashboard from "@/components/dashboard/dashboard";
  * Keeps the page component clean and delegates to the actual Dashboard component.
  */
 export default function DashboardPage() {
-  return <Dashboard />;
+  return (
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  );
 }

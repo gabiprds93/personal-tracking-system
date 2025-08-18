@@ -5,8 +5,7 @@ import { Manrope } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { Sidebar } from "@/components/sidebar"
-import { MobileNavigation } from "@/components/navigation"
+import LayoutWrapper from "@/components/layout-wrapper"
 import "./globals.css"
 
 const geist = Geist({
@@ -38,27 +37,10 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <ErrorBoundary>
-            <div className="flex min-h-screen">
-              {/* Desktop Sidebar */}
-              <div className="hidden md:block">
-                <Sidebar />
-              </div>
-              
-              {/* Main Content */}
-              <div className="flex-1 md:ml-80">
-                {/* Mobile Navigation */}
-                <div className="md:hidden sticky top-0 z-50 bg-background border-b border-border p-4">
-                  <div className="flex items-center justify-between">
-                    <MobileNavigation />
-                    <h1 className="font-bold">Personal Tracker</h1>
-                    <div></div>
-                  </div>
-                </div>
-                
+              <LayoutWrapper>
                 {children}
-              </div>
-            </div>
-          </ErrorBoundary>
+              </LayoutWrapper>
+            </ErrorBoundary>
           </AuthProvider>
         </ThemeProvider>
       </body>

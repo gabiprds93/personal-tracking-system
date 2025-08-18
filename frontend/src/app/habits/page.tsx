@@ -1,5 +1,10 @@
 import Habits from "@/components/habits/habits";
+import { ProtectedRoute } from "@/components/auth";
 
 export default function HabitsPage() {
-  return <Habits />;
+  return (
+    <ProtectedRoute>
+      <Habits />
+    </ProtectedRoute>
+  );
 }
