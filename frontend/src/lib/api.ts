@@ -125,7 +125,8 @@ export const goalsApi = {
 // Analytics API methods
 export const analyticsApi = {
   getStats: () => api.get('/analytics/stats'),
-  getTrends: () => api.get('/analytics/trends'),
+  getTrends: (timeRange?: string) => 
+    api.get(`/analytics/trends${timeRange ? `?timeRange=${timeRange}` : ''}`),
   getCategories: () => api.get('/analytics/categories'),
   getMetrics: () => api.get('/analytics/metrics'),
 };

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Target, Flame, Activity, Award } from 'lucide-react';
+import { analyticsApi } from '@/lib/api';
 import { 
   UseAnalyticsReturn, 
   AnalyticsState, 
@@ -26,13 +27,78 @@ import {
  * @returns Object containing state and actions for analytics management
  */
 export const useAnalytics = (): UseAnalyticsReturn => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [selectedMetric, setSelectedMetric] = useState<MetricType>('completion');
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
+  
+  // Real data from API
+  const [habitTrendData, setHabitTrendData] = useState<HabitTrendData[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [keyMetrics, setKeyMetrics] = useState<KeyMetric[]>([]);
 
-  // Mock data - replace with actual data fetching
-  const habitTrendData: HabitTrendData[] = [
+  // Load analytics data from API
+  const loadAnalyticsData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Fetch data in parallel
+      const [trendsResponse, categoriesResponse, metricsResponse] = await Promise.all([
+        analyticsApi.getTrends(timeRange),
+        analyticsApi.getCategories(),
+        analyticsApi.getMetrics()
+      ]);
+
+      if (trendsResponse.success && trendsResponse.data) {
+        setHabitTrendData(trendsResponse.data);
+      }
+
+      if (categoriesResponse.success && categoriesResponse.data) {
+        setCategoryData(categoriesResponse.data);
+      }
+
+      if (metricsResponse.success && metricsResponse.data) {
+        // Transform backend metrics to frontend format
+        const transformedMetrics = metricsResponse.data.map((metric: any) => ({
+          ...metric,
+          icon: getIconComponent(metric.icon),
+          iconColor: metric.iconColor || 'text-primary'
+        }));
+        setKeyMetrics(transformedMetrics);
+      }
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [timeRange]);
+
+  // Helper function to map icon strings to components
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'check-circle':
+      case 'target':
+        return Target;
+      case 'flame':
+        return Flame;
+      case 'trending-up':
+      case 'activity':
+        return Activity;
+      case 'star':
+      case 'award':
+        return Award;
+      default:
+        return Target;
+    }
+  };
+
+  // Load data on component mount and when timeRange changes
+  useEffect(() => {
+    loadAnalyticsData();
+  }, [loadAnalyticsData, timeRange]);
+
+  // Mock data for features not yet implemented in backend
+  const mockHabitTrendData: HabitTrendData[] = [
     { date: "2024-03-01", completed: 4, total: 6, rate: 67 },
     { date: "2024-03-02", completed: 5, total: 6, rate: 83 },
     { date: "2024-03-03", completed: 6, total: 6, rate: 100 },
@@ -53,7 +119,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
     { date: "2024-03-18", completed: 4, total: 6, rate: 67 },
   ];
 
-  const categoryData: CategoryData[] = [
+  const mockCategoryData: CategoryData[] = [
     { name: "Salud", value: 35, color: "#ef4444" },
     { name: "Aprendizaje", value: 25, color: "#3b82f6" },
     { name: "Bienestar", value: 20, color: "#8b5cf6" },
@@ -110,7 +176,7 @@ export const useAnalytics = (): UseAnalyticsReturn => {
 
   const heatmapData = generateHeatmapData();
 
-  const keyMetrics: KeyMetric[] = [
+  const mockKeyMetrics: KeyMetric[] = [
     {
       id: 'success-rate',
       title: 'Tasa de Éxito',
@@ -223,13 +289,13 @@ export const useAnalytics = (): UseAnalyticsReturn => {
     timeRange,
     selectedMetric,
     activeTab,
-    habitTrendData,
-    categoryData,
+    habitTrendData: habitTrendData.length > 0 ? habitTrendData : mockHabitTrendData,
+    categoryData: categoryData.length > 0 ? categoryData : mockCategoryData,
     weeklyComparisonData,
     timeOfDayData,
     streakData,
     heatmapData,
-    keyMetrics,
+    keyMetrics: keyMetrics.length > 0 ? keyMetrics : mockKeyMetrics,
     dayAnalysis,
     insights,
     predictions,
@@ -238,15 +304,16 @@ export const useAnalytics = (): UseAnalyticsReturn => {
 
   const actions: AnalyticsActions = {
     // Filter and view actions
-    setTimeRange,
+    setTimeRange: (newTimeRange: TimeRange) => {
+      setTimeRange(newTimeRange);
+      // Data will be reloaded via useEffect dependency
+    },
     setSelectedMetric,
     setActiveTab,
     
     // Data refresh actions
     refreshData: () => {
-      setLoading(true);
-      // TODO: Implement data fetching
-      setTimeout(() => setLoading(false), 1000);
+      loadAnalyticsData();
     },
     
     // Utility actions

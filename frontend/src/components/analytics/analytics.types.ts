@@ -1,4 +1,4 @@
-import { ReactNode, HTMLAttributes } from 'react';
+import React, { ReactNode, HTMLAttributes } from 'react';
 
 // Core data interfaces
 export interface HabitTrendData {
@@ -49,7 +49,7 @@ export interface KeyMetric {
   value: string | number;
   change: string;
   changeType: 'positive' | 'negative' | 'neutral';
-  icon: any; // Lucide icon component
+  icon: React.ComponentType<any>; // Lucide icon component
   iconColor: string;
 }
 
