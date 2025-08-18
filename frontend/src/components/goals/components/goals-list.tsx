@@ -25,6 +25,23 @@ const GoalsList: React.FC<GoalsListProps> = ({
   className,
   ...props 
 }) => {
+  // This will be passed properly from the parent component with real data
+  const getDaysRemaining = (targetDate: string): number => {
+    const today = new Date();
+    const target = new Date(targetDate);
+    return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getGoalStatus = (goal: any) => {
+    // This will be replaced with proper status logic from the hook
+    return { id: goal.status, name: goal.status, color: "" };
+  };
+
+  const getCategoryInfo = (categoryId: string) => {
+    // This will be replaced with proper category logic from the hook
+    return { id: categoryId, name: categoryId, icon: null, color: "" };
+  };
+
   if (goals.length === 0) {
     return (
       <EmptyState 
@@ -48,9 +65,9 @@ const GoalsList: React.FC<GoalsListProps> = ({
           onSelect={onSelectGoal}
           onEdit={onEditGoal}
           onDelete={onDeleteGoal}
-          category={{ id: goal.category, name: goal.category, icon: null, color: "" }}
-          status={{ id: goal.status, name: goal.status, color: "" }}
-          daysRemaining={0}
+          category={getCategoryInfo(goal.category)}
+          status={getGoalStatus(goal)}
+          daysRemaining={getDaysRemaining(goal.targetDate)}
         />
       ))}
     </div>
