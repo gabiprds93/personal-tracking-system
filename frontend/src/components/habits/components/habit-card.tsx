@@ -118,6 +118,7 @@ const HabitCard: React.FC<HabitCardProps> = ({
             variant={habit.completedToday ? "default" : "outline"}
             className="w-full gap-2"
             onClick={() => onToggleCompletion(habit.id)}
+            disabled={habit.completedToday}
           >
             <CheckCircle2 className={cn("w-4 h-4", habit.completedToday ? "fill-current" : "")} />
             {habit.completedToday ? "Completado hoy" : "Marcar como completado"}

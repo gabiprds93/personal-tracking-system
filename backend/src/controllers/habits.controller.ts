@@ -1,22 +1,37 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '@/config/database';
-import { ApiResponse, CreateHabitRequest, UpdateHabitRequest, Habit } from '@/types';
+import { prisma } from '../config/database';
+import { ApiResponse, CreateHabitRequest, UpdateHabitRequest, Habit, AuthUser } from '../types';
+
+// Extend Express Request to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
+}
 
 const createHabitSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   category: z.string().min(1).max(50),
+  icon: z.string().optional(),
   points: z.number().int().min(1).max(100).default(10),
+  difficulty: z.number().int().min(1).max(3).default(2),
   frequency: z.enum(['daily', 'weekly', 'monthly']).default('daily'),
+  targetDays: z.array(z.number().int().min(0).max(6)).default([]),
 });
 
 const updateHabitSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().optional(),
   category: z.string().min(1).max(50).optional(),
+  icon: z.string().optional(),
   points: z.number().int().min(1).max(100).optional(),
+  difficulty: z.number().int().min(1).max(3).optional(),
   frequency: z.enum(['daily', 'weekly', 'monthly']).optional(),
+  targetDays: z.array(z.number().int().min(0).max(6)).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -34,26 +49,29 @@ export const createHabit = async (req: Request, res: Response) => {
     }
 
     const validatedData = createHabitSchema.parse(req.body);
-    const { name, description, category, points, frequency } = validatedData;
+    const { name, description, category, icon, points, difficulty, frequency, targetDays } = validatedData;
 
     const habit = await prisma.habit.create({
       data: {
         userId: req.user.id,
         name,
-        description,
+        description: description || null,
         category,
+        icon: icon || null,
         points,
+        difficulty,
         frequency,
+        targetDays,
       },
     });
 
     const response: ApiResponse<Habit> = {
       success: true,
-      data: habit,
+      data: habit as Habit,
       message: 'Habit created successfully',
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -64,7 +82,7 @@ export const createHabit = async (req: Request, res: Response) => {
     }
 
     console.error('Create habit error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -94,20 +112,42 @@ export const getHabits = async (req: Request, res: Response) => {
       where.isActive = isActive === 'true';
     }
 
+    // Get today's date range for completion check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const habits = await prisma.habit.findMany({
       where,
+      include: {
+        completions: {
+          where: {
+            completedAt: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
+    // Add completion status to each habit
+    const habitsWithCompletionStatus = habits.map(habit => ({
+      ...habit,
+      completed: habit.completions.length > 0,
+    }));
+
     const response: ApiResponse<Habit[]> = {
       success: true,
-      data: habits,
+      data: habitsWithCompletionStatus as Habit[],
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get habits error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -124,6 +164,21 @@ export const getHabit = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Habit ID is required',
+      });
+    }
+
+    // Validate ObjectId format for MongoDB
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid habit ID format',
+      });
+    }
 
     const habit = await prisma.habit.findFirst({
       where: {
@@ -150,10 +205,10 @@ export const getHabit = async (req: Request, res: Response) => {
       data: habit,
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get habit error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -170,6 +225,22 @@ export const updateHabit = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Habit ID is required',
+      });
+    }
+
+    // Validate ObjectId format for MongoDB
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid habit ID format',
+      });
+    }
+
     const validatedData = updateHabitSchema.parse(req.body);
 
     const habit = await prisma.habit.findFirst({
@@ -186,18 +257,23 @@ export const updateHabit = async (req: Request, res: Response) => {
       });
     }
 
+    // Filter out undefined values for Prisma
+    const updateData = Object.fromEntries(
+      Object.entries(validatedData).filter(([_, value]) => value !== undefined)
+    );
+
     const updatedHabit = await prisma.habit.update({
       where: { id },
-      data: validatedData,
+      data: updateData,
     });
 
     const response: ApiResponse<Habit> = {
       success: true,
-      data: updatedHabit,
+      data: updatedHabit as Habit,
       message: 'Habit updated successfully',
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -208,7 +284,7 @@ export const updateHabit = async (req: Request, res: Response) => {
     }
 
     console.error('Update habit error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -225,6 +301,21 @@ export const deleteHabit = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Habit ID is required',
+      });
+    }
+
+    // Validate ObjectId format for MongoDB
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid habit ID format',
+      });
+    }
 
     const habit = await prisma.habit.findFirst({
       where: {
@@ -249,10 +340,10 @@ export const deleteHabit = async (req: Request, res: Response) => {
       message: 'Habit deleted successfully',
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Delete habit error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -269,6 +360,22 @@ export const completeHabit = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Habit ID is required',
+      });
+    }
+
+    // Validate ObjectId format for MongoDB
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid habit ID format',
+      });
+    }
+
     const validatedData = completeHabitSchema.parse(req.body);
     const { notes } = validatedData;
 
@@ -311,21 +418,35 @@ export const completeHabit = async (req: Request, res: Response) => {
       });
     }
 
+    // Create completion record
     const completion = await prisma.habitCompletion.create({
       data: {
         habitId: id,
         userId: req.user.id,
-        notes,
+        notes: notes || null,
+      },
+    });
+
+    // Update habit streak
+    const updatedHabit = await prisma.habit.update({
+      where: { id },
+      data: {
+        streak: {
+          increment: 1,
+        },
       },
     });
 
     const response: ApiResponse = {
       success: true,
-      data: completion,
+      data: {
+        completion,
+        habit: updatedHabit,
+      },
       message: 'Habit completed successfully',
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -336,7 +457,7 @@ export const completeHabit = async (req: Request, res: Response) => {
     }
 
     console.error('Complete habit error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -381,13 +502,13 @@ export const getTodayHabits = async (req: Request, res: Response) => {
 
     const response: ApiResponse<Habit[]> = {
       success: true,
-      data: habitsWithCompletionStatus,
+      data: habitsWithCompletionStatus as Habit[],
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get today habits error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });

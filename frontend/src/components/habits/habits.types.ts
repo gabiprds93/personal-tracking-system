@@ -2,7 +2,7 @@ import { ReactNode, HTMLAttributes } from 'react';
 
 // Core interfaces
 export interface Habit {
-  id: number;
+  id: string;
   name: string;
   category: string;
   icon: string;
@@ -82,8 +82,8 @@ export interface HabitsFiltersProps extends HTMLAttributes<HTMLDivElement> {
 export interface HabitsGridProps extends HTMLAttributes<HTMLDivElement> {
   habits: Habit[];
   onEditHabit: (habit: Habit) => void;
-  onDeleteHabit: (id: number) => void;
-  onToggleCompletion: (id: number) => void;
+  onDeleteHabit: (id: string) => void;
+  onToggleCompletion: (id: string) => void;
   onAddHabit: () => void;
   className?: string;
 }
@@ -91,8 +91,8 @@ export interface HabitsGridProps extends HTMLAttributes<HTMLDivElement> {
 export interface HabitCardProps extends HTMLAttributes<HTMLDivElement> {
   habit: Habit;
   onEdit: (habit: Habit) => void;
-  onDelete: (id: number) => void;
-  onToggleCompletion: (id: number) => void;
+  onDelete: (id: string) => void;
+  onToggleCompletion: (id: string) => void;
   className?: string;
 }
 
@@ -149,8 +149,8 @@ export interface HabitsActions {
   addHabit: (habitData: HabitFormData) => void;
   editHabit: (habit: Habit) => void;
   updateHabit: (habitData: HabitFormData) => void;
-  deleteHabit: (id: number) => void;
-  toggleCompletion: (id: number) => void;
+  deleteHabit: (id: string) => void;
+  toggleCompletion: (id: string) => void;
   
   // Form actions
   submitForm: (e: React.FormEvent) => void;
@@ -163,7 +163,7 @@ export interface HabitsActions {
 export type CreateHabitData = Omit<Habit, 'id' | 'createdAt' | 'streak' | 'completedToday'>;
 
 // Utility type for habit update
-export type UpdateHabitData = Partial<Habit> & { id: number };
+export type UpdateHabitData = Partial<Habit> & { id: string };
 
 // Filter types
 export type HabitFilter = 'all' | 'completed' | 'pending' | 'streak';

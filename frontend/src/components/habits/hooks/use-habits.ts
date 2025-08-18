@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { habitsApi } from '@/lib/api';
+import { useAuth } from '@/contexts/auth-context';
 import { Heart, Dumbbell, Brain, Book, Coffee, Droplets, Moon, Target, Briefcase } from 'lucide-react';
 import { 
   UseHabitsReturn, 
@@ -15,12 +16,52 @@ import {
   WeekDay
 } from '../habits.types';
 
+// Backend Habit interface
+interface BackendHabit {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  category: string;
+  icon?: string;
+  points: number;
+  difficulty: number;
+  frequency: string;
+  targetDays: number[];
+  streak: number;
+  isActive: boolean;
+  completed?: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+/**
+ * Transform backend habit data to frontend format
+ */
+const transformBackendHabit = (backendHabit: BackendHabit): Habit => {
+  return {
+    id: backendHabit.id, // Keep original ObjectId as string
+    name: backendHabit.name,
+    category: backendHabit.category,
+    icon: backendHabit.icon || 'target', // Use icon from backend or default
+    frequency: backendHabit.frequency,
+    difficulty: backendHabit.difficulty,
+    targetDays: backendHabit.targetDays || [],
+    createdAt: typeof backendHabit.createdAt === 'string' 
+      ? backendHabit.createdAt 
+      : backendHabit.createdAt.toISOString(),
+    streak: backendHabit.streak || 0,
+    completedToday: backendHabit.completed || false,
+  };
+};
+
 /**
  * Custom hook for managing habits state and actions
  * 
  * @returns Object containing state and actions for habits management
  */
 export const useHabits = (): UseHabitsReturn => {
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -39,24 +80,28 @@ export const useHabits = (): UseHabitsReturn => {
   // Habits data from API
   const [habits, setHabits] = useState<Habit[]>([]);
 
-  // Load habits from API on component mount
+  // Load habits from API when user is authenticated
   useEffect(() => {
-    loadHabits();
-  }, []);
+    if (isAuthenticated) {
+      loadHabits();
+    }
+  }, [isAuthenticated]);
 
   const loadHabits = async () => {
     try {
       setLoading(true);
       const response = await habitsApi.getAll();
-      if (response.success && response.data) {
-        setHabits(response.data);
+      if (response.success && response.data && Array.isArray(response.data)) {
+        // Transform backend data to frontend format
+        const transformedHabits = response.data.map(transformBackendHabit);
+        setHabits(transformedHabits);
       }
     } catch (error) {
       console.error('Failed to load habits:', error);
       // Fallback to mock data if API fails
       setHabits([
         {
-          id: 1,
+          id: "1",
           name: "Ejercicio matutino",
           category: "ejercicio",
           icon: "dumbbell",
@@ -68,7 +113,7 @@ export const useHabits = (): UseHabitsReturn => {
           completedToday: true,
         },
         {
-          id: 2,
+          id: "2",
           name: "Leer 30 minutos",
           category: "aprendizaje",
           icon: "book",
@@ -80,7 +125,7 @@ export const useHabits = (): UseHabitsReturn => {
           completedToday: true,
         },
         {
-          id: 3,
+          id: "3",
           name: "Meditar",
           category: "bienestar",
           icon: "moon",
@@ -190,16 +235,28 @@ export const useHabits = (): UseHabitsReturn => {
     addHabit: async (habitData: HabitFormData) => {
       try {
         setLoading(true);
-        const response = await habitsApi.create(habitData);
-        if (response.success && response.data) {
-          setHabits([...habits, response.data]);
+        // Transform frontend data to backend format
+        const backendData = {
+          name: habitData.name,
+          category: habitData.category,
+          icon: habitData.icon,
+          frequency: habitData.frequency,
+          difficulty: habitData.difficulty,
+          targetDays: habitData.targetDays,
+          points: habitData.difficulty * 5, // Map difficulty to points
+        };
+        
+        const response = await habitsApi.create(backendData);
+        if (response.success && response.data && typeof response.data === 'object') {
+          const transformedHabit = transformBackendHabit(response.data as BackendHabit);
+          setHabits([...habits, transformedHabit]);
         }
       } catch (error) {
         console.error('Failed to create habit:', error);
         // Fallback to local state
         const newHabit: Habit = {
           ...habitData,
-          id: Date.now(),
+          id: Date.now().toString(),
           createdAt: new Date().toISOString(),
           streak: 0,
           completedToday: false,
@@ -229,9 +286,21 @@ export const useHabits = (): UseHabitsReturn => {
       
       try {
         setLoading(true);
-        const response = await habitsApi.update(editingHabit.id.toString(), habitData);
-        if (response.success && response.data) {
-          setHabits(habits.map((h) => (h.id === editingHabit.id ? response.data : h)));
+        // Transform frontend data to backend format
+        const backendData = {
+          name: habitData.name,
+          category: habitData.category,
+          icon: habitData.icon,
+          frequency: habitData.frequency,
+          difficulty: habitData.difficulty,
+          targetDays: habitData.targetDays,
+          points: habitData.difficulty * 5, // Map difficulty to points
+        };
+        
+        const response = await habitsApi.update(editingHabit.id.toString(), backendData);
+        if (response.success && response.data && typeof response.data === 'object') {
+          const transformedHabit = transformBackendHabit(response.data as BackendHabit);
+          setHabits(habits.map((h) => (h.id === editingHabit.id ? transformedHabit : h)));
         }
       } catch (error) {
         console.error('Failed to update habit:', error);
@@ -246,10 +315,10 @@ export const useHabits = (): UseHabitsReturn => {
       }
     },
     
-    deleteHabit: async (id: number) => {
+    deleteHabit: async (id: string) => {
       try {
         setLoading(true);
-        const response = await habitsApi.delete(id.toString());
+        const response = await habitsApi.delete(id);
         if (response.success) {
           setHabits(habits.filter((h) => h.id !== id));
         }
@@ -262,9 +331,9 @@ export const useHabits = (): UseHabitsReturn => {
       }
     },
     
-    toggleCompletion: async (id: number) => {
+    toggleCompletion: async (id: string) => {
       try {
-        const response = await habitsApi.complete(id.toString());
+        const response = await habitsApi.complete(id);
         if (response.success) {
           // Reload habits to get updated data
           await loadHabits();

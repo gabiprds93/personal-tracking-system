@@ -31,10 +31,14 @@ export interface Habit {
   id: string;
   userId: string;
   name: string;
-  description?: string;
+  description: string | null;
   category: string;
+  icon: string | null;
   points: number;
+  difficulty: number;
   frequency: string;
+  targetDays: number[];
+  streak: number;
   isActive: boolean;
   completed?: boolean; // For frontend compatibility
   createdAt: Date;
