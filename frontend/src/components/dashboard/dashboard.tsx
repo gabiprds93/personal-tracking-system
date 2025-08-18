@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { 
+  DashboardHeader,
   MotivationalMessage,
   MetricsGrid, 
   TodayHabits, 
@@ -61,6 +62,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <DashboardHeader />
+      
       <main className="p-6 space-y-6">
         <MotivationalMessage 
           messages={motivationalMessages}

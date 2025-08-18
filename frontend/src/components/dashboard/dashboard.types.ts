@@ -59,6 +59,10 @@ export interface RecentAchievementsProps extends HTMLAttributes<HTMLDivElement> 
   className?: string;
 }
 
+export interface DashboardHeaderProps extends HTMLAttributes<HTMLElement> {
+  className?: string;
+}
+
 export interface CelebrationOverlayProps {
   isVisible: boolean;
   points?: number;

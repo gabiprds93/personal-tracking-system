@@ -1,3 +1,4 @@
+export { default as DashboardHeader } from './dashboard-header';
 export { default as MotivationalMessage } from './motivational-message';
 export { default as MetricsGrid } from './metrics-grid';
 export { default as TodayHabits } from './today-habits';
