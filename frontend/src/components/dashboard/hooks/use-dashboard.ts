@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DashboardState, DashboardActions, UseDashboardReturn } from '../dashboard.types';
+import { DashboardState, DashboardActions, UseDashboardReturn, UserStats, Habit, Badge } from '../dashboard.types';
 import { dashboardApi } from '@/lib/api';
 
 const motivationalMessages = [
@@ -38,12 +38,27 @@ export const useDashboard = (): UseDashboardReturn => {
       setLoading(true);
       setError(null);
       
-      const { userStats, todayHabits } = await dashboardApi.getDashboardData();
+      // Load dashboard data and recent badges in parallel
+      const [dashboardData, recentBadgesResponse] = await Promise.all([
+        dashboardApi.getDashboardData(),
+        dashboardApi.getRecentBadges()
+      ]);
+      
+      const { userStats, todayHabits } = dashboardData;
+      const recentBadges = recentBadgesResponse.data || [];
+      
+      console.log('📊 Dashboard data loaded:', {
+        userStats: !!userStats,
+        todayHabits: Array.isArray(todayHabits) ? todayHabits.length : 0,
+        recentBadges: Array.isArray(recentBadges) ? recentBadges.length : 0,
+        badgesData: recentBadges
+      });
       
       setState(prev => ({
         ...prev,
-        userStats: userStats || prev.userStats,
-        todayHabits: todayHabits || prev.todayHabits,
+        userStats: (userStats as UserStats) || prev.userStats,
+        todayHabits: (todayHabits as Habit[]) || prev.todayHabits,
+        recentBadges: (recentBadges as Badge[]) || prev.recentBadges,
         mounted: true,
       }));
     } catch (error) {

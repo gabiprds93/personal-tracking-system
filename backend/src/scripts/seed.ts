@@ -9,8 +9,61 @@ async function main() {
   // Skip cleanup for now to avoid transaction issues
   console.log('🧹 Skipping cleanup (MongoDB replica set required for deleteMany)');
 
-  // Create badges (but skip due to transaction requirements)
-  console.log('🏅 Skipping badge creation (MongoDB replica set required)');
+  // Create sample badges
+  const sampleBadges = [
+    {
+      name: 'Primera Gota',
+      description: 'Completaste tu primer hábito de hidratación',
+      icon: '💧',
+      category: 'Primeros Pasos',
+      requirement: 'Complete first water habit',
+      points: 50
+    },
+    {
+      name: 'Atleta Novato',
+      description: 'Completaste tu primer entrenamiento',
+      icon: '🏃‍♂️',
+      category: 'Fitness',
+      requirement: 'Complete first exercise habit',
+      points: 50
+    },
+    {
+      name: 'Ratón de Biblioteca',
+      description: 'Dedicaste tiempo a la lectura',
+      icon: '📚',
+      category: 'Educación',
+      requirement: 'Complete first reading habit',
+      points: 50
+    },
+    {
+      name: 'Mente Zen',
+      description: 'Comenzaste tu práctica de meditación',
+      icon: '🧘‍♀️',
+      category: 'Bienestar',
+      requirement: 'Complete first meditation habit',
+      points: 50
+    },
+    {
+      name: 'Constructor de Hábitos',
+      description: 'Creaste tu primer hábito',
+      icon: '🎯',
+      category: 'Logros',
+      requirement: 'Create first habit',
+      points: 25
+    }
+  ];
+
+  console.log('🏅 Creating sample badges...');
+  for (const badgeData of sampleBadges) {
+    try {
+      const badge = await prisma.badge.create({
+        data: badgeData
+      });
+      console.log(`✅ Created badge: ${badge.name}`);
+    } catch (error) {
+      console.log(`❌ Failed to create badge ${badgeData.name}:`, error);
+    }
+  }
 
   // Check if test user already exists, if not create one
   let user = await prisma.user.findUnique({
@@ -51,6 +104,12 @@ async function main() {
     where: { userId: user.id }
   });
   console.log('🧹 Cleaned up existing goals for user');
+
+  // Clean up existing user badges to avoid duplicates
+  await prisma.userBadge.deleteMany({
+    where: { userId: user.id }
+  });
+  console.log('🧹 Cleaned up existing user badges');
 
   // Create sample habits
   const sampleHabits = [
@@ -153,6 +212,26 @@ async function main() {
       console.log(`✅ Created goal: ${goal.title}`);
     } catch (error) {
       console.log(`❌ Failed to create goal ${goalData.title}:`, error);
+    }
+  }
+
+  // Assign some badges to the user to show recent achievements
+  console.log('🏆 Assigning badges to user...');
+  const badges = await prisma.badge.findMany();
+  
+  // Assign first 3 badges to the user
+  for (let i = 0; i < Math.min(3, badges.length); i++) {
+    try {
+      await prisma.userBadge.create({
+        data: {
+          userId: user.id,
+          badgeId: badges[i].id,
+          unlockedAt: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)) // Spread over last few days
+        }
+      });
+      console.log(`✅ Assigned badge: ${badges[i]?.name}`);
+    } catch (error) {
+      console.log(`❌ Failed to assign badge ${badges[i]?.name}:`, error);
     }
   }
 

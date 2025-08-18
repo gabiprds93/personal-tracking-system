@@ -43,6 +43,7 @@ const TodayHabits: React.FC<TodayHabitsProps> = ({
             <Button
               variant="ghost"
               size="sm"
+              disabled={habit.completed}
               className={cn(
                 "w-8 h-8 p-0",
                 habit.completed ? "text-primary" : "text-muted-foreground"

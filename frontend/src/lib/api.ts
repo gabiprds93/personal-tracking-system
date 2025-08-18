@@ -130,6 +130,12 @@ export const analyticsApi = {
   getMetrics: () => api.get('/analytics/metrics'),
 };
 
+// Badges API methods
+export const badgesApi = {
+  getRecent: () => api.get('/badges/recent'),
+  getAll: () => api.get('/badges'),
+};
+
 // Dashboard API methods - combines multiple endpoints for dashboard data
 export const dashboardApi = {
   // Get all dashboard data in parallel
@@ -157,8 +163,6 @@ export const dashboardApi = {
   
   // Get recent badges/achievements
   getRecentBadges: async () => {
-    // This would need to be implemented in the backend
-    // For now, return empty array
-    return { success: true, data: [] };
+    return badgesApi.getRecent();
   },
 };

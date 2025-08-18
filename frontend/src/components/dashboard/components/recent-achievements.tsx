@@ -28,18 +28,26 @@ const RecentAchievements: React.FC<RecentAchievementsProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {badges.map((badge, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-3 p-3 bg-accent/10 rounded-lg border border-accent/20"
-          >
-            <div className="text-2xl">{badge.icon}</div>
-            <div>
-              <p className="font-medium text-sm">{badge.name}</p>
-              <p className="text-xs text-muted-foreground">{badge.description}</p>
-            </div>
+        {badges.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <div className="text-4xl mb-2">🏆</div>
+            <p className="text-sm">No hay logros recientes</p>
+            <p className="text-xs mt-1">¡Completa algunos hábitos para desbloquear logros!</p>
           </div>
-        ))}
+        ) : (
+          badges.map((badge, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 p-3 bg-accent/10 rounded-lg border border-accent/20"
+            >
+              <div className="text-2xl">{badge.icon}</div>
+              <div>
+                <p className="font-medium text-sm">{badge.name}</p>
+                <p className="text-xs text-muted-foreground">{badge.description}</p>
+              </div>
+            </div>
+          ))
+        )}
         <Link href="/profile">
           <Button variant="outline" className="w-full gap-2 bg-transparent">
             <Trophy className="w-4 h-4" />
