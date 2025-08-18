@@ -1,22 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { HabitsStorage } from "@/lib/storage"
-import { validateHabit } from "@/lib/validations"
-
-// Types
-interface Habit {
-  id: number
-  name: string
-  category: string
-  icon: string
-  frequency: string
-  difficulty: number
-  targetDays: number[]
-  createdAt: string
-  streak: number
-  completedToday: boolean
-}
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -91,66 +75,44 @@ const weekDays = [
 ]
 
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Load habits from localStorage on mount
-  useEffect(() => {
-    const savedHabits = HabitsStorage.get()
-    if (savedHabits.length === 0) {
-      // Initialize with default habits if none exist
-      const defaultHabits = [
-        {
-          id: 1,
-          name: "Ejercicio matutino",
-          category: "ejercicio",
-          icon: "dumbbell",
-          frequency: "daily",
-          difficulty: 2,
-          targetDays: [],
-          createdAt: new Date().toISOString(),
-          streak: 7,
-          completedToday: true,
-        },
-        {
-          id: 2,
-          name: "Leer 30 minutos",
-          category: "aprendizaje",
-          icon: "book",
-          frequency: "daily",
-          difficulty: 1,
-          targetDays: [],
-          createdAt: new Date().toISOString(),
-          streak: 12,
-          completedToday: true,
-        },
-        {
-          id: 3,
-          name: "Meditar",
-          category: "bienestar",
-          icon: "moon",
-          frequency: "daily",
-          difficulty: 2,
-          targetDays: [],
-          createdAt: new Date().toISOString(),
-          streak: 5,
-          completedToday: false,
-        },
-      ]
-      setHabits(defaultHabits)
-      HabitsStorage.set(defaultHabits)
-    } else {
-      setHabits(savedHabits)
-    }
-    setLoading(false)
-  }, [])
-
-  // Save habits to localStorage whenever habits change
-  useEffect(() => {
-    if (!loading && habits.length > 0) {
-      HabitsStorage.set(habits)
-    }
-  }, [habits, loading])
+  const [habits, setHabits] = useState([
+    {
+      id: 1,
+      name: "Ejercicio matutino",
+      category: "ejercicio",
+      icon: "dumbbell",
+      frequency: "daily",
+      difficulty: 2,
+      targetDays: [],
+      createdAt: new Date(),
+      streak: 7,
+      completedToday: true,
+    },
+    {
+      id: 2,
+      name: "Leer 30 minutos",
+      category: "aprendizaje",
+      icon: "book",
+      frequency: "daily",
+      difficulty: 1,
+      targetDays: [],
+      createdAt: new Date(),
+      streak: 12,
+      completedToday: true,
+    },
+    {
+      id: 3,
+      name: "Meditar",
+      category: "bienestar",
+      icon: "moon",
+      frequency: "daily",
+      difficulty: 2,
+      targetDays: [],
+      createdAt: new Date(),
+      streak: 5,
+      completedToday: false,
+    },
+  ])
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -166,8 +128,6 @@ export default function HabitsPage() {
     difficulty: 1,
     targetDays: [],
   })
-  
-  const [formErrors, setFormErrors] = useState({})
 
   const resetForm = () => {
     setFormData({
@@ -183,19 +143,12 @@ export default function HabitsPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    setFormErrors({})
-
-    // Validate form data
-    const validation = validateHabit(formData)
-    if (!validation.isValid) {
-      setFormErrors(validation.errors)
-      return
-    }
+    if (!formData.name || !formData.category || !formData.icon) return
 
     const habitData = {
       ...formData,
       id: editingHabit ? editingHabit.id : Date.now(),
-      createdAt: editingHabit ? editingHabit.createdAt : new Date().toISOString(),
+      createdAt: editingHabit ? editingHabit.createdAt : new Date(),
       streak: editingHabit ? editingHabit.streak : 0,
       completedToday: editingHabit ? editingHabit.completedToday : false,
     }
@@ -250,22 +203,6 @@ export default function HabitsPage() {
   const getCategoryInfo = (categoryId) => categories.find((c) => c.id === categoryId)
   const getIconComponent = (iconId) => habitIcons.find((i) => i.id === iconId)?.icon
   const getDifficultyInfo = (difficultyId) => difficulties.find((d) => d.id === difficultyId)
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-muted rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-background">

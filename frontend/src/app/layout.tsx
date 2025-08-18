@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata } from "next/types"
 import { Geist } from "next/font/google"
 import { Manrope } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
