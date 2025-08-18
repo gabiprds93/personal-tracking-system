@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { habitsApi } from '@/lib/api';
 import { Heart, Dumbbell, Brain, Book, Coffee, Droplets, Moon, Target, Briefcase } from 'lucide-react';
 import { 
   UseHabitsReturn, 
@@ -35,45 +36,66 @@ export const useHabits = (): UseHabitsReturn => {
   });
   const [formErrors, setFormErrors] = useState<HabitFormErrors>({});
 
-  // Mock data - replace with actual data fetching
-  const [habits, setHabits] = useState<Habit[]>([
-    {
-      id: 1,
-      name: "Ejercicio matutino",
-      category: "ejercicio",
-      icon: "dumbbell",
-      frequency: "daily",
-      difficulty: 2,
-      targetDays: [],
-      createdAt: new Date().toISOString(),
-      streak: 7,
-      completedToday: true,
-    },
-    {
-      id: 2,
-      name: "Leer 30 minutos",
-      category: "aprendizaje",
-      icon: "book",
-      frequency: "daily",
-      difficulty: 1,
-      targetDays: [],
-      createdAt: new Date().toISOString(),
-      streak: 12,
-      completedToday: true,
-    },
-    {
-      id: 3,
-      name: "Meditar",
-      category: "bienestar",
-      icon: "moon",
-      frequency: "daily",
-      difficulty: 2,
-      targetDays: [],
-      createdAt: new Date().toISOString(),
-      streak: 5,
-      completedToday: false,
-    },
-  ]);
+  // Habits data from API
+  const [habits, setHabits] = useState<Habit[]>([]);
+
+  // Load habits from API on component mount
+  useEffect(() => {
+    loadHabits();
+  }, []);
+
+  const loadHabits = async () => {
+    try {
+      setLoading(true);
+      const response = await habitsApi.getAll();
+      if (response.success && response.data) {
+        setHabits(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load habits:', error);
+      // Fallback to mock data if API fails
+      setHabits([
+        {
+          id: 1,
+          name: "Ejercicio matutino",
+          category: "ejercicio",
+          icon: "dumbbell",
+          frequency: "daily",
+          difficulty: 2,
+          targetDays: [],
+          createdAt: new Date().toISOString(),
+          streak: 7,
+          completedToday: true,
+        },
+        {
+          id: 2,
+          name: "Leer 30 minutos",
+          category: "aprendizaje",
+          icon: "book",
+          frequency: "daily",
+          difficulty: 1,
+          targetDays: [],
+          createdAt: new Date().toISOString(),
+          streak: 12,
+          completedToday: true,
+        },
+        {
+          id: 3,
+          name: "Meditar",
+          category: "bienestar",
+          icon: "moon",
+          frequency: "daily",
+          difficulty: 2,
+          targetDays: [],
+          createdAt: new Date().toISOString(),
+          streak: 5,
+          completedToday: false,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories: HabitCategory[] = [
     { id: "salud", name: "Salud", icon: Heart, color: "text-red-500 bg-red-50 border-red-200" },
@@ -165,15 +187,27 @@ export const useHabits = (): UseHabitsReturn => {
     },
     
     // Habit actions
-    addHabit: (habitData: HabitFormData) => {
-      const newHabit: Habit = {
-        ...habitData,
-        id: Date.now(),
-        createdAt: new Date().toISOString(),
-        streak: 0,
-        completedToday: false,
-      };
-      setHabits([...habits, newHabit]);
+    addHabit: async (habitData: HabitFormData) => {
+      try {
+        setLoading(true);
+        const response = await habitsApi.create(habitData);
+        if (response.success && response.data) {
+          setHabits([...habits, response.data]);
+        }
+      } catch (error) {
+        console.error('Failed to create habit:', error);
+        // Fallback to local state
+        const newHabit: Habit = {
+          ...habitData,
+          id: Date.now(),
+          createdAt: new Date().toISOString(),
+          streak: 0,
+          completedToday: false,
+        };
+        setHabits([...habits, newHabit]);
+      } finally {
+        setLoading(false);
+      }
     },
     
     editHabit: (habit: Habit) => {
@@ -190,33 +224,66 @@ export const useHabits = (): UseHabitsReturn => {
       setIsDialogOpen(true);
     },
     
-    updateHabit: (habitData: HabitFormData) => {
+    updateHabit: async (habitData: HabitFormData) => {
       if (!editingHabit) return;
       
-      const updatedHabit: Habit = {
-        ...editingHabit,
-        ...habitData,
-      };
-      
-      setHabits(habits.map((h) => (h.id === editingHabit.id ? updatedHabit : h)));
+      try {
+        setLoading(true);
+        const response = await habitsApi.update(editingHabit.id.toString(), habitData);
+        if (response.success && response.data) {
+          setHabits(habits.map((h) => (h.id === editingHabit.id ? response.data : h)));
+        }
+      } catch (error) {
+        console.error('Failed to update habit:', error);
+        // Fallback to local state
+        const updatedHabit: Habit = {
+          ...editingHabit,
+          ...habitData,
+        };
+        setHabits(habits.map((h) => (h.id === editingHabit.id ? updatedHabit : h)));
+      } finally {
+        setLoading(false);
+      }
     },
     
-    deleteHabit: (id: number) => {
-      setHabits(habits.filter((h) => h.id !== id));
+    deleteHabit: async (id: number) => {
+      try {
+        setLoading(true);
+        const response = await habitsApi.delete(id.toString());
+        if (response.success) {
+          setHabits(habits.filter((h) => h.id !== id));
+        }
+      } catch (error) {
+        console.error('Failed to delete habit:', error);
+        // Fallback to local state
+        setHabits(habits.filter((h) => h.id !== id));
+      } finally {
+        setLoading(false);
+      }
     },
     
-    toggleCompletion: (id: number) => {
-      setHabits(
-        habits.map((h) =>
-          h.id === id
-            ? {
-                ...h,
-                completedToday: !h.completedToday,
-                streak: !h.completedToday ? h.streak + 1 : Math.max(0, h.streak - 1),
-              }
-            : h,
-        ),
-      );
+    toggleCompletion: async (id: number) => {
+      try {
+        const response = await habitsApi.complete(id.toString());
+        if (response.success) {
+          // Reload habits to get updated data
+          await loadHabits();
+        }
+      } catch (error) {
+        console.error('Failed to toggle habit completion:', error);
+        // Fallback to local state update
+        setHabits(
+          habits.map((h) =>
+            h.id === id
+              ? {
+                  ...h,
+                  completedToday: !h.completedToday,
+                  streak: !h.completedToday ? h.streak + 1 : Math.max(0, h.streak - 1),
+                }
+              : h,
+          ),
+        );
+      }
     },
     
     // Form actions

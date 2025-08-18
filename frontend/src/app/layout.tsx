@@ -3,6 +3,7 @@ import type { Metadata } from "next/types"
 import { Geist } from "next/font/google"
 import { Manrope } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/contexts/auth-context"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { Sidebar } from "@/components/sidebar"
 import { MobileNavigation } from "@/components/navigation"
@@ -35,7 +36,8 @@ export default function RootLayout({
     <html lang="es" className={`${geist.variable} ${manrope.variable} antialiased`}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <ErrorBoundary>
+          <AuthProvider>
+            <ErrorBoundary>
             <div className="flex min-h-screen">
               {/* Desktop Sidebar */}
               <div className="hidden md:block">
@@ -57,6 +59,7 @@ export default function RootLayout({
               </div>
             </div>
           </ErrorBoundary>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
