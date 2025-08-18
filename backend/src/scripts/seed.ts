@@ -180,21 +180,21 @@ async function main() {
     {
       title: 'Learn TypeScript',
       description: 'Master TypeScript fundamentals and advanced concepts',
-      category: 'Education',
+      category: 'aprendizaje',
       targetDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
       progress: 25
     },
     {
       title: 'Run a 5K',
       description: 'Complete a 5K run without stopping',
-      category: 'Fitness',
+      category: 'salud',
       targetDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
       progress: 10
     },
     {
       title: 'Read 12 Books This Year',
       description: 'Read one book per month to expand knowledge',
-      category: 'Personal Development',
+      category: 'personal',
       targetDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
       progress: 8
     }
@@ -221,17 +221,20 @@ async function main() {
   
   // Assign first 3 badges to the user
   for (let i = 0; i < Math.min(3, badges.length); i++) {
+    const badge = badges[i];
+    if (!badge) continue; // Skip if badge doesn't exist
+    
     try {
       await prisma.userBadge.create({
         data: {
           userId: user.id,
-          badgeId: badges[i].id,
+          badgeId: badge.id,
           unlockedAt: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)) // Spread over last few days
         }
       });
-      console.log(`✅ Assigned badge: ${badges[i]?.name}`);
+      console.log(`✅ Assigned badge: ${badge.name}`);
     } catch (error) {
-      console.log(`❌ Failed to assign badge ${badges[i]?.name}:`, error);
+      console.log(`❌ Failed to assign badge ${badge.name}:`, error);
     }
   }
 

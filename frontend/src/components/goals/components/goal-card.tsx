@@ -58,6 +58,16 @@ const GoalCard: React.FC<GoalCardProps> = ({
     }
   };
 
+  const calculateProgress = () => {
+    if (goal.milestones.length === 0) {
+      return goal.progress; // Fallback to stored progress if no milestones
+    }
+    const completedMilestones = goal.milestones.filter(m => m.completed).length;
+    return Math.round((completedMilestones / goal.milestones.length) * 100);
+  };
+
+  const dynamicProgress = calculateProgress();
+
   return (
     <Card
       className={cn(
@@ -103,9 +113,9 @@ const GoalCard: React.FC<GoalCardProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span>Progreso</span>
-              <span className="font-medium">{goal.progress}%</span>
+              <span className="font-medium">{dynamicProgress}%</span>
             </div>
-            <Progress value={goal.progress} className="h-2" />
+            <Progress value={dynamicProgress} className="h-2" />
           </div>
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">

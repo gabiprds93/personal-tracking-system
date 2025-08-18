@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Target, TrendingUp, BookOpen, Award } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
+import { goalsApi } from '@/lib/api';
 import { 
   UseGoalsReturn, 
   GoalsState, 
@@ -11,8 +12,7 @@ import {
   GoalCategory,
   GoalStatusInfo,
   CategoryFilter,
-  StatusFilter,
-  GoalStatus
+  StatusFilter
 } from '../goals.types';
 
 /**
@@ -21,7 +21,7 @@ import {
  * @returns Object containing state and actions for goals management
  */
 export const useGoals = (): UseGoalsReturn => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
@@ -36,67 +36,36 @@ export const useGoals = (): UseGoalsReturn => {
     milestones: ['', '', '', '']
   });
   const [formErrors, setFormErrors] = useState<GoalFormErrors>({});
+  const [goals, setGoals] = useState<Goal[]>([]);
 
-  // Mock data - replace with actual data fetching
-  const [goals, setGoals] = useState<Goal[]>([
-    {
-      id: 1,
-      title: "Aprender React Avanzado",
-      description: "Dominar conceptos avanzados de React incluyendo hooks personalizados, context API y optimización de rendimiento",
-      category: "aprendizaje",
-      targetDate: "2024-06-30",
-      progress: 65,
-      status: "active",
-      createdAt: "2024-01-15",
-      milestones: [
-        { id: 1, title: "Completar curso de hooks", completed: true, completedAt: "2024-02-15" },
-        { id: 2, title: "Construir proyecto con Context API", completed: true, completedAt: "2024-03-10" },
-        { id: 3, title: "Optimizar aplicación existente", completed: false, completedAt: null },
-        { id: 4, title: "Crear tutorial para otros", completed: false, completedAt: null },
-      ],
-      notes: [
-        { id: 1, content: "Excelente progreso con los hooks personalizados", date: "2024-02-20" },
-        { id: 2, content: "Context API más complejo de lo esperado, pero muy útil", date: "2024-03-12" },
-      ],
-    },
-    {
-      id: 2,
-      title: "Correr 10K en menos de 50 minutos",
-      description: "Mejorar mi tiempo de carrera de 10K desde 55 minutos actuales hasta menos de 50 minutos",
-      category: "salud",
-      targetDate: "2024-05-15",
-      progress: 40,
-      status: "active",
-      createdAt: "2024-02-01",
-      milestones: [
-        { id: 1, title: "Correr 5K sin parar", completed: true, completedAt: "2024-02-20" },
-        { id: 2, title: "Completar primer 10K", completed: true, completedAt: "2024-03-05" },
-        { id: 3, title: "Reducir tiempo a 52 minutos", completed: false, completedAt: null },
-        { id: 4, title: "Alcanzar meta de 50 minutos", completed: false, completedAt: null },
-      ],
-      notes: [
-        { id: 1, content: "Primera semana difícil, pero ya veo mejoras", date: "2024-02-08" },
-        { id: 2, content: "¡Logré mi primer 10K! Tiempo: 54 minutos", date: "2024-03-05" },
-      ],
-    },
-    {
-      id: 3,
-      title: "Ahorrar $10,000 para emergencias",
-      description: "Crear un fondo de emergencia sólido ahorrando $500 mensuales durante 20 meses",
-      category: "financiero",
-      targetDate: "2025-01-31",
-      progress: 25,
-      status: "active",
-      createdAt: "2024-01-01",
-      milestones: [
-        { id: 1, title: "Ahorrar primeros $1,000", completed: true, completedAt: "2024-02-28" },
-        { id: 2, title: "Alcanzar $2,500", completed: true, completedAt: "2024-03-31" },
-        { id: 3, title: "Llegar a $5,000", completed: false, completedAt: null },
-        { id: 4, title: "Completar $10,000", completed: false, completedAt: null },
-      ],
-      notes: [{ id: 1, content: "Automaticé las transferencias, mucho más fácil", date: "2024-01-15" }],
-    },
-  ]);
+  // Load goals from API
+  const loadGoals = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await goalsApi.getAll();
+      
+      if (response.success && response.data && Array.isArray(response.data)) {
+        // Transform backend data to frontend format
+        const transformedGoals = response.data.map((goal: any) => ({
+          ...goal,
+          id: goal.id,
+          targetDate: goal.targetDate.split('T')[0], // Convert to YYYY-MM-DD format
+          createdAt: goal.createdAt.split('T')[0],
+          milestones: goal.milestones || [],
+          notes: goal.notes || []
+        }));
+        setGoals(transformedGoals);
+      }
+    } catch (error) {
+      console.error('Error loading goals:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGoals();
+  }, [loadGoals]);
 
   const categories: GoalCategory[] = [
     { id: "salud", name: "Salud", icon: Target, color: "text-red-500 bg-red-50 border-red-200" },
@@ -189,24 +158,23 @@ export const useGoals = (): UseGoalsReturn => {
     },
     
     // Goal actions
-    addGoal: (goalData: GoalFormData) => {
-      const newGoal: Goal = {
-        ...goalData,
-        id: Date.now(),
-        progress: 0,
-        status: "active",
-        createdAt: new Date().toISOString().split("T")[0],
-        milestones: goalData.milestones
-          .filter((m) => m.trim())
-          .map((milestone, index) => ({
-            id: index + 1,
-            title: milestone,
-            completed: false,
-            completedAt: null,
-          })),
-        notes: [],
-      };
-      setGoals([...goals, newGoal]);
+    addGoal: async (goalData: GoalFormData) => {
+      try {
+        const goalPayload = {
+          title: goalData.title,
+          description: goalData.description,
+          category: goalData.category,
+          targetDate: new Date(goalData.targetDate).toISOString(),
+          milestones: goalData.milestones.filter(m => m.trim())
+        };
+        
+        const response = await goalsApi.create(goalPayload);
+        if (response.success) {
+          loadGoals(); // Reload goals after creation
+        }
+      } catch (error) {
+        console.error('Error creating goal:', error);
+      }
     },
     
     editGoal: (goal: Goal) => {
@@ -225,85 +193,98 @@ export const useGoals = (): UseGoalsReturn => {
       setIsDialogOpen(true);
     },
     
-    updateGoal: (goalData: GoalFormData) => {
+    updateGoal: async (goalData: GoalFormData) => {
       if (!editingGoal) return;
       
-      const updatedGoal: Goal = {
-        ...editingGoal,
-        ...goalData,
-        milestones: goalData.milestones
-          .filter((m) => m.trim())
-          .map((milestone, index) => ({
-            id: index + 1,
-            title: milestone,
-            completed: false,
-            completedAt: null,
-          }))
-      };
-      
-      setGoals(goals.map((g) => (g.id === editingGoal.id ? updatedGoal : g)));
+      try {
+        const goalPayload = {
+          title: goalData.title,
+          description: goalData.description,
+          category: goalData.category,
+          targetDate: new Date(goalData.targetDate).toISOString(),
+        };
+        
+        const response = await goalsApi.update(editingGoal.id.toString(), goalPayload);
+        if (response.success) {
+          loadGoals(); // Reload goals after update
+        }
+      } catch (error) {
+        console.error('Error updating goal:', error);
+      }
     },
     
-    deleteGoal: (id: number) => {
-      setGoals(goals.filter((g) => g.id !== id));
-      if (selectedGoal?.id === id) {
-        setSelectedGoal(null);
+    deleteGoal: async (id: number) => {
+      try {
+        const response = await goalsApi.delete(id.toString());
+        if (response.success) {
+          loadGoals(); // Reload goals after deletion
+          if (selectedGoal?.id === id) {
+            setSelectedGoal(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error deleting goal:', error);
       }
     },
     
     // Milestone actions
-    toggleMilestone: (goalId: number, milestoneId: number) => {
-      setGoals(
-        goals.map((goal) => {
-          if (goal.id === goalId) {
-            const updatedMilestones = goal.milestones.map((milestone) => {
-              if (milestone.id === milestoneId) {
-                return {
-                  ...milestone,
-                  completed: !milestone.completed,
-                  completedAt: !milestone.completed ? new Date().toISOString().split("T")[0] : null,
-                };
+    toggleMilestone: async (goalId: number, milestoneId: number) => {
+      // Optimistic update - update UI immediately
+      setGoals(prevGoals => 
+        prevGoals.map(goal => 
+          goal.id === goalId 
+            ? {
+                ...goal,
+                milestones: goal.milestones.map(milestone =>
+                  milestone.id === milestoneId
+                    ? { ...milestone, completed: !milestone.completed }
+                    : milestone
+                )
               }
-              return milestone;
-            });
-
-            const completedCount = updatedMilestones.filter((m) => m.completed).length;
-            const newProgress = Math.round((completedCount / updatedMilestones.length) * 100);
-
-            return {
-              ...goal,
-              milestones: updatedMilestones,
-              progress: newProgress,
-              status: newProgress === 100 ? "completed" : goal.status,
-            };
-          }
-          return goal;
-        })
+            : goal
+        )
       );
+
+      // Update selectedGoal if it's the current goal
+      if (selectedGoal?.id === goalId) {
+        setSelectedGoal(prevGoal => {
+          if (!prevGoal) return null;
+          return {
+            ...prevGoal,
+            milestones: prevGoal.milestones.map(milestone =>
+              milestone.id === milestoneId
+                ? { ...milestone, completed: !milestone.completed }
+                : milestone
+            )
+          };
+        });
+      }
+
+      try {
+        const response = await goalsApi.toggleMilestone(goalId.toString(), milestoneId.toString());
+        if (!response.success) {
+          // Revert optimistic update on failure
+          loadGoals();
+        }
+      } catch (error) {
+        console.error('Error toggling milestone:', error);
+        // Revert optimistic update on error
+        loadGoals();
+      }
     },
     
     // Note actions
-    addNote: (goalId: number, content: string) => {
+    addNote: async (goalId: number, content: string) => {
       if (!content.trim()) return;
 
-      setGoals(
-        goals.map((goal) => {
-          if (goal.id === goalId) {
-            return {
-              ...goal,
-              notes: [
-                ...goal.notes,
-                {
-                  id: Date.now(),
-                  content,
-                  date: new Date().toISOString().split("T")[0],
-                },
-              ],
-            };
-          }
-          return goal;
-        })
-      );
+      try {
+        const response = await goalsApi.addNote(goalId.toString(), { content });
+        if (response.success) {
+          loadGoals(); // Reload goals after adding note
+        }
+      } catch (error) {
+        console.error('Error adding note:', error);
+      }
     },
     
     // Form actions

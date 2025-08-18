@@ -87,16 +87,19 @@ export interface GoalsListProps extends HTMLAttributes<HTMLDivElement> {
   onEditGoal: (goal: Goal) => void;
   onDeleteGoal: (id: number) => void;
   onAddGoal: () => void;
+  getCategoryInfo: (categoryId: string) => GoalCategory | undefined;
+  getGoalStatus: (goal: Goal) => GoalStatusInfo;
+  getDaysRemaining: (targetDate: string) => number;
   className?: string;
 }
 
-export interface GoalCardProps extends HTMLAttributes<HTMLDivElement> {
+export interface GoalCardProps {
   goal: Goal;
   isSelected: boolean;
   onSelect: (goal: Goal) => void;
   onEdit: (goal: Goal) => void;
   onDelete: (id: number) => void;
-  category: GoalCategory;
+  category: GoalCategory | undefined;
   status: GoalStatusInfo;
   daysRemaining: number;
   className?: string;
