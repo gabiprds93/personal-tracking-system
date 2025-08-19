@@ -327,7 +327,7 @@ export const getKeyMetrics = async (req: Request, res: Response) => {
     const metrics: KeyMetric[] = [
       {
         id: 'today-completions',
-        title: 'Today\'s Completions',
+        title: 'Completados Hoy',
         value: todayCompletions,
         change: '+2',
         changeType: 'positive',
@@ -336,7 +336,7 @@ export const getKeyMetrics = async (req: Request, res: Response) => {
       },
       {
         id: 'current-streak',
-        title: 'Current Streak',
+        title: 'Racha Actual',
         value: currentStreak,
         change: '+1',
         changeType: 'positive',
@@ -345,7 +345,7 @@ export const getKeyMetrics = async (req: Request, res: Response) => {
       },
       {
         id: 'weekly-average',
-        title: 'Weekly Average',
+        title: 'Promedio Semanal',
         value: weeklyAverage,
         change: '-1',
         changeType: 'negative',
@@ -354,7 +354,7 @@ export const getKeyMetrics = async (req: Request, res: Response) => {
       },
       {
         id: 'total-points',
-        title: 'Total Points',
+        title: 'Puntos Totales',
         value: totalPoints,
         change: '+15',
         changeType: 'positive',
