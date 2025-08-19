@@ -31,10 +31,12 @@ npm run db:push      # Sync schema with MongoDB
 npm run db:studio    # Open Prisma Studio
 npm run db:seed      # Populate with sample data
 npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint errors automatically
 npm run test         # Run tests
+npm run test:watch   # Run tests in watch mode
 ```
 
-Note: The frontend uses both npm (package-lock.json) and pnpm (pnpm-lock.yaml) lock files.
+Note: The frontend uses npm for package management.
 
 ## Architecture
 
@@ -43,9 +45,13 @@ Note: The frontend uses both npm (package-lock.json) and pnpm (pnpm-lock.yaml) l
 - **Styling**: Tailwind CSS 4 with shadcn/ui components
 - **Language**: TypeScript 5
 - **UI Library**: Complete shadcn/ui component library
+- **State Management**: React Context for global state (auth, stats)
+- **Forms**: React Hook Form with Zod validation
 - **Theme**: Dark/light mode support with next-themes
 - **Icons**: Lucide React
+- **Charts**: Recharts for analytics visualization
 - **Fonts**: Geist and Manrope with Next.js font optimization
+- **Localization**: Spanish interface with localized content
 
 ### Backend API (`backend/`)
 - **Framework**: Express.js with TypeScript
@@ -68,7 +74,10 @@ Note: The frontend uses both npm (package-lock.json) and pnpm (pnpm-lock.yaml) l
 - **Component Standards**: All components have `displayName` and default exports
 - **Props Forwarding**: Components extend `HTMLAttributes` for flexibility
 - **Theme System**: Dark/light mode theming with `ThemeProvider` wrapper
+- **State Management**: React Contexts (`auth-context`, `stats-context`) for global state
+- **Layout System**: Authenticated layout wrapper with route protection
 - **Utility Functions**: Tailwind class merging utilities in `lib/utils.ts` using clsx and tailwind-merge
+- **API Layer**: Centralized API client with authentication and error handling
 - **Page Structure**: App Router pages reduced to simple component calls
 - **Responsive Design**: Mobile-first responsive design patterns
 
@@ -84,6 +93,7 @@ Note: The frontend uses both npm (package-lock.json) and pnpm (pnpm-lock.yaml) l
 
 ### Pages and Routes
 - **`/`** (app/page.tsx) - Main dashboard with habit tracking, progress metrics, and gamification
+- **`/login`** (app/login/page.tsx) - Authentication page with login/register forms
 - **`/habits`** (app/habits/page.tsx) - Habits management page
 - **`/goals`** (app/goals/page.tsx) - Goals tracking page  
 - **`/analytics`** (app/analytics/page.tsx) - Analytics and progress visualization
@@ -101,13 +111,15 @@ Note: The frontend uses both npm (package-lock.json) and pnpm (pnpm-lock.yaml) l
 - **Habits**: `/api/habits/` - CRUD operations, completion tracking, daily habits
 - **Goals**: `/api/goals/` - Goal management, milestones, progress tracking, notes
 - **Analytics**: `/api/analytics/` - User statistics, trends, metrics, completion rates
+- **Badges**: `/api/badges/` - Badge system, user badges, achievement tracking
 
 ### Application Patterns
-- **Gamification**: Points system, streaks, achievements, and motivational messaging
+- **Gamification**: Points system, streaks, badges, achievements, and motivational messaging
 - **Real-time UI**: Celebration animations and progress feedback
 - **Theme Support**: System-aware dark/light mode with smooth transitions
 - **Data Management**: Backend API with MongoDB for persistent data storage
-- **Authentication**: JWT-based authentication with secure password hashing
+- **Authentication**: JWT-based authentication with secure password hashing and route protection
+- **Badge System**: Achievement tracking with unlockable badges and categories
 
 ## Development Patterns
 
@@ -134,26 +146,32 @@ frontend/
 │   ├── page.tsx      # Dashboard (main page) - simple component call
 │   ├── layout.tsx    # Root layout with theme provider
 │   ├── globals.css   # Global styles and Tailwind imports
+│   ├── login/        # Authentication pages
 │   ├── habits/page.tsx       # Habits page - simple component call
 │   ├── goals/page.tsx        # Goals page - simple component call
 │   ├── analytics/page.tsx    # Analytics page - simple component call
 │   └── profile/page.tsx      # Profile page - simple component call
 ├── components/       # React components (modular architecture)
 │   ├── theme-provider.tsx    # Theme context wrapper
+│   ├── layout-wrapper.tsx    # Authentication layout wrapper
+│   ├── sidebar.tsx           # Main navigation sidebar
+│   ├── navigation.tsx        # Mobile navigation
 │   ├── ui/                   # shadcn/ui component library
+│   ├── auth/                 # Authentication components
 │   ├── dashboard/            # Dashboard feature module
-│   │   ├── dashboard.tsx     # Main component
-│   │   ├── dashboard.types.ts # TypeScript interfaces
-│   │   ├── hooks/use-dashboard.ts # Custom hook
-│   │   ├── components/       # Sub-components
-│   │   └── index.ts          # Barrel exports
 │   ├── habits/               # Habits feature module
 │   ├── goals/                # Goals feature module
 │   ├── analytics/            # Analytics feature module
 │   └── profile/              # Profile feature module
+├── contexts/         # React contexts for global state
+│   ├── auth-context.tsx      # Authentication state
+│   └── stats-context.tsx     # Statistics state
 ├── hooks/            # Global custom React hooks
-├── lib/              # Utility functions
-│   └── utils.ts      # Class merging and helpers
+├── lib/              # Utility functions and API client
+│   ├── api.ts        # Centralized API client
+│   ├── storage.ts    # Local storage utilities
+│   ├── utils.ts      # Class merging and helpers
+│   └── validations.ts # Zod validation schemas
 └── styles/           # Additional CSS files
 ```
 
@@ -169,12 +187,14 @@ backend/
 │   │   ├── auth.controller.ts
 │   │   ├── habits.controller.ts
 │   │   ├── goals.controller.ts
-│   │   └── analytics.controller.ts
+│   │   ├── analytics.controller.ts
+│   │   └── badges.controller.ts
 │   ├── routes/               # API route definitions
 │   │   ├── auth.routes.ts
 │   │   ├── habits.routes.ts
 │   │   ├── goals.routes.ts
-│   │   └── analytics.routes.ts
+│   │   ├── analytics.routes.ts
+│   │   └── badges.routes.ts
 │   ├── middleware/           # Express middleware
 │   │   └── auth.ts          # JWT authentication
 │   ├── types/               # TypeScript type definitions
