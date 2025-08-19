@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Clock, Repeat, CheckCircle2 } from "lucide-react";
+import { Edit, Trash2, Clock, Repeat, CheckCircle2, Heart, Dumbbell, Brain, Book, Coffee, Droplets, Moon, Target, Briefcase } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { HabitCardProps } from '../habits.types';
 
@@ -23,14 +23,30 @@ const HabitCard: React.FC<HabitCardProps> = ({
   className,
   ...props 
 }) => {
+  // Function to get the correct icon component
+  const getIconComponent = (iconName: string) => {
+    const icons: { [key: string]: React.ElementType } = {
+      heart: Heart,
+      dumbbell: Dumbbell,
+      brain: Brain,
+      book: Book,
+      coffee: Coffee,
+      droplets: Droplets,
+      moon: Moon,
+      target: Target,
+      briefcase: Briefcase,
+    };
+    return icons[iconName] || Target; // Default to Target if icon not found
+  };
+
   // These would come from the parent component with actual data
   const getCategoryInfo = (categoryId: string) => {
     const categories = [
-      { id: "salud", name: "Salud", color: "text-red-500 bg-red-50 border-red-200" },
-      { id: "ejercicio", name: "Ejercicio", color: "text-orange-500 bg-orange-50 border-orange-200" },
-      { id: "bienestar", name: "Bienestar", color: "text-purple-500 bg-purple-50 border-purple-200" },
-      { id: "aprendizaje", name: "Aprendizaje", color: "text-blue-500 bg-blue-50 border-blue-200" },
-      { id: "productividad", name: "Productividad", color: "text-green-500 bg-green-50 border-green-200" },
+      { id: "salud", name: "Salud", color: "text-red-500 bg-red-50 border-red-200", icon: Heart },
+      { id: "ejercicio", name: "Ejercicio", color: "text-orange-500 bg-orange-50 border-orange-200", icon: Dumbbell },
+      { id: "bienestar", name: "Bienestar", color: "text-purple-500 bg-purple-50 border-purple-200", icon: Moon },
+      { id: "aprendizaje", name: "Aprendizaje", color: "text-blue-500 bg-blue-50 border-blue-200", icon: Book },
+      { id: "productividad", name: "Productividad", color: "text-green-500 bg-green-50 border-green-200", icon: Briefcase },
     ];
     return categories.find(c => c.id === categoryId);
   };
@@ -46,6 +62,13 @@ const HabitCard: React.FC<HabitCardProps> = ({
 
   const categoryInfo = getCategoryInfo(habit.category);
   const difficultyInfo = getDifficultyInfo(habit.difficulty);
+  const IconComponent = getIconComponent(habit.icon);
+  
+  // Fallback values if category/difficulty not found
+  const displayCategory = categoryInfo?.name || habit.category || 'Sin categoría';
+  const displayColor = categoryInfo?.color || 'text-gray-500 bg-gray-50 border-gray-200';
+  const displayPoints = difficultyInfo?.points || (habit.difficulty * 5);
+  const displayDifficultyColor = difficultyInfo?.color || 'text-gray-600';
 
   const getFrequencyText = (frequency: string) => {
     switch (frequency) {
@@ -72,18 +95,17 @@ const HabitCard: React.FC<HabitCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={cn("w-10 h-10 rounded-lg border flex items-center justify-center", categoryInfo?.color)}>
-              {/* Icon would be rendered here based on habit.icon */}
-              <div className="w-5 h-5 bg-current rounded opacity-60" />
+            <div className={cn("w-10 h-10 rounded-lg border flex items-center justify-center", displayColor)}>
+              <IconComponent className="w-5 h-5" />
             </div>
             <div>
               <CardTitle className="text-lg font-sans">{habit.name}</CardTitle>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="text-xs">
-                  {categoryInfo?.name}
+                  {displayCategory}
                 </Badge>
-                <span className={cn("text-xs font-medium", difficultyInfo?.color)}>
-                  +{difficultyInfo?.points} pts
+                <span className={cn("text-xs font-medium", displayDifficultyColor)}>
+                  +{displayPoints} pts
                 </span>
               </div>
             </div>

@@ -114,48 +114,75 @@ async function main() {
   // Create sample habits
   const sampleHabits = [
     {
-      name: 'Drink Water',
-      description: 'Drink at least 8 glasses of water daily',
-      category: 'Health',
-      icon: '💧',
+      name: 'Beber Agua',
+      description: 'Beber al menos 8 vasos de agua al día',
+      category: 'salud',
+      icon: 'droplets',
       points: 10,
       difficulty: 1,
       frequency: 'daily'
     },
     {
-      name: 'Exercise',
-      description: '30 minutes of physical activity',
-      category: 'Fitness',
-      icon: '🏃',
+      name: 'Ejercicio Matutino',
+      description: '30 minutos de actividad física',
+      category: 'ejercicio',
+      icon: 'dumbbell',
       points: 20,
       difficulty: 2,
       frequency: 'daily'
     },
     {
-      name: 'Read',
-      description: 'Read for at least 20 minutes',
-      category: 'Personal Development',
-      icon: '📚',
+      name: 'Leer 30 Minutos',
+      description: 'Leer por al menos 30 minutos diarios',
+      category: 'aprendizaje',
+      icon: 'book',
       points: 15,
       difficulty: 2,
       frequency: 'daily'
     },
     {
-      name: 'Meditate',
-      description: '10 minutes of mindfulness meditation',
-      category: 'Mental Health',
-      icon: '🧘',
+      name: 'Meditar',
+      description: '10 minutos de meditación mindfulness',
+      category: 'bienestar',
+      icon: 'moon',
       points: 15,
       difficulty: 2,
       frequency: 'daily'
     },
     {
-      name: 'Learn Programming',
-      description: 'Practice coding for 1 hour',
-      category: 'Education',
-      icon: '💻',
-      points: 25,
-      difficulty: 3,
+      name: 'Planificar el Día',
+      description: 'Organizar tareas y prioridades diarias',
+      category: 'productividad',
+      icon: 'briefcase',
+      points: 10,
+      difficulty: 1,
+      frequency: 'daily'
+    },
+    {
+      name: 'Caminar',
+      description: 'Dar un paseo de al menos 15 minutos',
+      category: 'salud',
+      icon: 'heart',
+      points: 15,
+      difficulty: 1,
+      frequency: 'daily'
+    },
+    {
+      name: 'Práctica de Gratitud',
+      description: 'Escribir 3 cosas por las que estoy agradecido',
+      category: 'bienestar',
+      icon: 'brain',
+      points: 10,
+      difficulty: 1,
+      frequency: 'daily'
+    },
+    {
+      name: 'Evitar Café Tarde',
+      description: 'No tomar café después de las 4 PM',
+      category: 'salud',
+      icon: 'coffee',
+      points: 10,
+      difficulty: 2,
       frequency: 'daily'
     }
   ];
@@ -178,25 +205,39 @@ async function main() {
   // Create sample goals
   const sampleGoals = [
     {
-      title: 'Learn TypeScript',
-      description: 'Master TypeScript fundamentals and advanced concepts',
+      title: 'Aprender TypeScript',
+      description: 'Dominar los fundamentos y conceptos avanzados de TypeScript',
       category: 'aprendizaje',
       targetDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
       progress: 25
     },
     {
-      title: 'Run a 5K',
-      description: 'Complete a 5K run without stopping',
+      title: 'Correr 5K',
+      description: 'Completar una carrera de 5K sin parar',
       category: 'salud',
       targetDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
       progress: 10
     },
     {
-      title: 'Read 12 Books This Year',
-      description: 'Read one book per month to expand knowledge',
-      category: 'personal',
+      title: 'Leer 12 Libros Este Año',
+      description: 'Leer un libro por mes para expandir conocimiento',
+      category: 'aprendizaje',
       targetDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
       progress: 8
+    },
+    {
+      title: 'Meditar 30 Días Consecutivos',
+      description: 'Establecer una rutina de meditación diaria',
+      category: 'bienestar',
+      targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      progress: 15
+    },
+    {
+      title: 'Organizar Sistema de Productividad',
+      description: 'Implementar un sistema completo de organización personal',
+      category: 'productividad',
+      targetDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), // 45 days from now
+      progress: 35
     }
   ];
 
