@@ -9,16 +9,6 @@ export interface Level {
   bgColor: string;
 }
 
-export interface Badge {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  requirement: string;
-  unlocked: boolean;
-  unlockedAt: string | null;
-}
 
 export interface UserStats {
   totalPoints: number;
@@ -28,7 +18,6 @@ export interface UserStats {
   completionRate: number;
   habitsCompleted: number;
   goalsCompleted: number;
-  badgesEarned: number;
   joinedDate: string;
 }
 
@@ -74,12 +63,6 @@ export interface QuickStatsProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-export interface BadgeSectionProps extends HTMLAttributes<HTMLDivElement> {
-  unlockedBadges: Badge[];
-  lockedBadges: Badge[];
-  onBadgeClick?: (badge: Badge) => void;
-  className?: string;
-}
 
 export interface WeeklyChallengeProps extends HTMLAttributes<HTMLDivElement> {
   challenge: WeeklyChallengeData;
@@ -91,10 +74,6 @@ export interface StatsGridProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-export interface CelebrationModalProps {
-  isVisible: boolean;
-  newBadge?: Badge | null;
-}
 
 export interface UseProfileReturn {
   state: ProfileState;
@@ -102,21 +81,18 @@ export interface UseProfileReturn {
 }
 
 export interface ProfileState {
+  loading: boolean;
+  error: string | null;
   userStats: UserStats;
   levels: Level[];
-  availableBadges: Badge[];
   weeklyChallenge: WeeklyChallengeData;
-  celebrationVisible: boolean;
-  newBadgeUnlocked: Badge | null;
   currentLevel: Level;
   nextLevel: Level | null;
   progressToNext: number;
-  unlockedBadges: Badge[];
-  lockedBadges: Badge[];
 }
 
 export interface ProfileActions {
-  triggerCelebration: (badge?: Badge) => void;
   getCurrentLevel: (points: number) => Level;
   getNextLevel: (points: number) => Level | null;
+  refreshData: () => void;
 }

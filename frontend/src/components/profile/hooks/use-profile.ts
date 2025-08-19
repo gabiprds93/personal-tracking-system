@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { analyticsApi } from '@/lib/api';
 import { 
   UseProfileReturn, 
   ProfileState, 
   ProfileActions, 
   Level, 
-  Badge,
   UserStats,
   WeeklyChallengeData
 } from '../profile.types';
@@ -21,89 +21,6 @@ const levels: Level[] = [
   { level: 8, name: "Mítico", minPoints: 10000, maxPoints: 99999, color: "text-pink-600", bgColor: "bg-pink-100" },
 ];
 
-// Badge definitions
-const availableBadges: Badge[] = [
-  {
-    id: "streak_7",
-    name: "Racha de Fuego",
-    description: "Completa hábitos por 7 días consecutivos",
-    icon: "🔥",
-    category: "streaks",
-    requirement: "7 días consecutivos",
-    unlocked: true,
-    unlockedAt: "2024-03-15",
-  },
-  {
-    id: "streak_30",
-    name: "Llama Eterna",
-    description: "Mantén una racha de 30 días",
-    icon: "🌟",
-    category: "streaks",
-    requirement: "30 días consecutivos",
-    unlocked: false,
-    unlockedAt: null,
-  },
-  {
-    id: "streak_100",
-    name: "Fénix Imparable",
-    description: "Alcanza 100 días consecutivos",
-    icon: "🦅",
-    category: "streaks",
-    requirement: "100 días consecutivos",
-    unlocked: false,
-    unlockedAt: null,
-  },
-  {
-    id: "multitask",
-    name: "Multitarea",
-    description: "Completa 5+ hábitos en un solo día",
-    icon: "⚡",
-    category: "daily",
-    requirement: "5+ hábitos en un día",
-    unlocked: true,
-    unlockedAt: "2024-03-10",
-  },
-  {
-    id: "early_bird",
-    name: "Madrugador",
-    description: "Completa ejercicio antes de las 7am",
-    icon: "🌅",
-    category: "habits",
-    requirement: "Ejercicio antes de 7am",
-    unlocked: true,
-    unlockedAt: "2024-03-08",
-  },
-  {
-    id: "consistency",
-    name: "Constancia",
-    description: "Completa el 90% de hábitos en un mes",
-    icon: "💎",
-    category: "monthly",
-    requirement: "90% completado mensual",
-    unlocked: false,
-    unlockedAt: null,
-  },
-  {
-    id: "goal_crusher",
-    name: "Destructor de Metas",
-    description: "Completa 3 metas en un mes",
-    icon: "🎯",
-    category: "goals",
-    requirement: "3 metas completadas",
-    unlocked: false,
-    unlockedAt: null,
-  },
-  {
-    id: "perfectionist",
-    name: "Perfeccionista",
-    description: "Semana perfecta: 100% de hábitos",
-    icon: "✨",
-    category: "weekly",
-    requirement: "Semana 100% perfecta",
-    unlocked: false,
-    unlockedAt: null,
-  },
-];
 
 // Weekly challenge
 const weeklyChallenge: WeeklyChallengeData = {
@@ -127,20 +44,45 @@ const weeklyChallenge: WeeklyChallengeData = {
 };
 
 export const useProfile = (): UseProfileReturn => {
-  const [userStats] = useState<UserStats>({
-    totalPoints: 2847,
-    level: 12,
-    currentStreak: 7,
-    longestStreak: 23,
-    completionRate: 87,
-    habitsCompleted: 156,
-    goalsCompleted: 8,
-    badgesEarned: 3,
-    joinedDate: "2024-01-15",
+  // Loading and error states
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Real data from API
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalPoints: 0,
+    level: 1,
+    currentStreak: 0,
+    longestStreak: 0,
+    completionRate: 0,
+    habitsCompleted: 0,
+    goalsCompleted: 0,
+    joinedDate: new Date().toISOString(),
   });
 
-  const [celebrationVisible, setCelebrationVisible] = useState(false);
-  const [newBadgeUnlocked, setNewBadgeUnlocked] = useState<Badge | null>(null);
+  // Load profile data from API
+  const loadProfileData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const statsResponse = await analyticsApi.getStats();
+
+      if (statsResponse.success && statsResponse.data) {
+        setUserStats(statsResponse.data as UserStats);
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+      setError('Error loading profile data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load data on component mount
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
 
   // Calculate current level info
   const getCurrentLevel = useCallback((points: number): Level => {
@@ -166,36 +108,22 @@ export const useProfile = (): UseProfileReturn => {
     return ((userStats.totalPoints - currentLevel.minPoints) / (nextLevel.minPoints - currentLevel.minPoints)) * 100;
   }, [userStats.totalPoints, currentLevel, nextLevel]);
 
-  const unlockedBadges = useMemo(() => availableBadges.filter((badge) => badge.unlocked), []);
-  const lockedBadges = useMemo(() => availableBadges.filter((badge) => !badge.unlocked), []);
-
-  const triggerCelebration = useCallback((badge?: Badge) => {
-    setCelebrationVisible(true);
-    if (badge) setNewBadgeUnlocked(badge);
-    setTimeout(() => {
-      setCelebrationVisible(false);
-      setNewBadgeUnlocked(null);
-    }, 3000);
-  }, []);
 
   const state: ProfileState = {
+    loading,
+    error,
     userStats,
     levels,
-    availableBadges,
     weeklyChallenge,
-    celebrationVisible,
-    newBadgeUnlocked,
     currentLevel,
     nextLevel,
     progressToNext,
-    unlockedBadges,
-    lockedBadges,
   };
 
   const actions: ProfileActions = {
-    triggerCelebration,
     getCurrentLevel,
     getNextLevel,
+    refreshData: loadProfileData,
   };
 
   return { state, actions };

@@ -23,7 +23,6 @@ export interface UserStats {
   todayTotal: number;
   habitsCompleted: number;
   goalsCompleted: number;
-  badgesEarned: number;
   joinedDate: string;
 }
 
@@ -57,7 +56,7 @@ export interface Goal {
   id: string;
   userId: string;
   title: string;
-  description?: string;
+  description?: string | null;
   category: string;
   targetDate: Date;
   progress: number;
@@ -73,7 +72,7 @@ export interface Milestone {
   goalId: string;
   title: string;
   completed: boolean;
-  completedAt?: Date;
+  completedAt?: Date | null;
   order: number;
   createdAt: Date;
   updatedAt: Date;
@@ -234,13 +233,11 @@ export interface MilestoneData {
   remaining: string;
 }
 
-// Enums
-export enum GoalStatus {
-  ACTIVE = 'ACTIVE',
-  COMPLETED = 'COMPLETED',
-  PAUSED = 'PAUSED',
-  OVERDUE = 'OVERDUE'
-}
+// Import GoalStatus from Prisma to avoid enum conflicts
+import { GoalStatus } from '@prisma/client';
+
+// Re-export for consistency
+export { GoalStatus };
 
 export type TimeRange = '7d' | '30d' | '90d' | '1y';
 export type MetricType = 'completion' | 'streak' | 'consistency' | 'performance';

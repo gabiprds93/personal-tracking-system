@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Flame, CheckCircle2, Target, Award } from "lucide-react";
+import { Flame, CheckCircle2, Target } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { QuickStatsProps } from '../profile.types';
 
@@ -36,17 +36,11 @@ const QuickStats: React.FC<QuickStatsProps> = ({
       label: "Metas logradas",
       color: "text-blue-500",
     },
-    {
-      icon: Award,
-      value: userStats.badgesEarned,
-      label: "Insignias ganadas",
-      color: "text-purple-500",
-    },
   ];
 
   return (
     <div 
-      className={cn("grid grid-cols-2 md:grid-cols-4 gap-4", className)}
+      className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}
       {...props}
     >
       {stats.map((stat, index) => (

@@ -5,8 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LevelProgress,
   QuickStats,
-  RecentAchievements,
-  BadgeSection,
   WeeklyChallenge,
   StatsGrid
 } from './components';
@@ -23,6 +21,35 @@ import { useProfile } from './hooks/use-profile';
 const Profile: React.FC = () => {
   const { state, actions } = useProfile();
 
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className="text-xl font-bold mb-2">Error al cargar perfil</h3>
+          <p className="text-muted-foreground mb-4">{state.error}</p>
+          <button 
+            onClick={actions.refreshData}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -32,7 +59,7 @@ const Profile: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold font-sans">Mi Perfil</h1>
               <p className="text-muted-foreground font-serif">
-                Logros, insignias y progreso personal
+                Progreso personal y estadísticas
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -52,9 +79,8 @@ const Profile: React.FC = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
-            <TabsTrigger value="badges">Insignias</TabsTrigger>
             <TabsTrigger value="challenges">Desafíos</TabsTrigger>
             <TabsTrigger value="stats">Estadísticas</TabsTrigger>
           </TabsList>
@@ -70,17 +96,8 @@ const Profile: React.FC = () => {
 
             <QuickStats userStats={state.userStats} />
 
-            <RecentAchievements badges={state.unlockedBadges} />
           </TabsContent>
 
-          {/* Badges Tab */}
-          <TabsContent value="badges" className="space-y-6">
-            <BadgeSection
-              unlockedBadges={state.unlockedBadges}
-              lockedBadges={state.lockedBadges}
-              onBadgeClick={actions.triggerCelebration}
-            />
-          </TabsContent>
 
           {/* Challenges Tab */}
           <TabsContent value="challenges" className="space-y-6">
@@ -94,28 +111,6 @@ const Profile: React.FC = () => {
         </Tabs>
       </main>
 
-      {/* Celebration Animation */}
-      {state.celebrationVisible && (
-        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center bg-black/20">
-          <div className="bg-white rounded-lg p-8 shadow-2xl animate-bounce max-w-sm mx-4">
-            {state.newBadgeUnlocked ? (
-              <div className="text-center">
-                <div className="text-6xl mb-4">{state.newBadgeUnlocked.icon}</div>
-                <h3 className="text-xl font-bold mb-2">¡Nueva Insignia!</h3>
-                <p className="text-lg font-medium text-primary">{state.newBadgeUnlocked.name}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {state.newBadgeUnlocked.description}
-                </p>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="text-6xl mb-4">🎉</div>
-                <h3 className="text-xl font-bold">¡Felicitaciones!</h3>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

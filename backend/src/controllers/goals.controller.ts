@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '@/config/database';
-import { ApiResponse, CreateGoalRequest, UpdateGoalRequest, Goal, GoalStatus } from '@/types';
+import { ApiResponse, Goal, GoalStatus } from '@/types';
 
 const createGoalSchema = z.object({
   title: z.string().min(1).max(200),
@@ -45,7 +45,7 @@ export const createGoal = async (req: Request, res: Response) => {
       data: {
         userId: req.user.id,
         title,
-        description,
+        description: description || null,
         category,
         targetDate: new Date(targetDate),
         milestones: {
@@ -62,11 +62,11 @@ export const createGoal = async (req: Request, res: Response) => {
 
     const response: ApiResponse<Goal> = {
       success: true,
-      data: goal,
+      data: goal as Goal,
       message: 'Goal created successfully',
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -77,7 +77,7 @@ export const createGoal = async (req: Request, res: Response) => {
     }
 
     console.error('Create goal error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -130,13 +130,13 @@ export const getGoals = async (req: Request, res: Response) => {
 
     const response: ApiResponse<Goal[]> = {
       success: true,
-      data: goals,
+      data: goals as Goal[],
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get goals error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -153,6 +153,13 @@ export const getGoal = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Goal ID is required',
+      });
+    }
 
     const goal = await prisma.goal.findFirst({
       where: {
@@ -178,13 +185,13 @@ export const getGoal = async (req: Request, res: Response) => {
 
     const response: ApiResponse<Goal> = {
       success: true,
-      data: goal,
+      data: goal as Goal,
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get goal error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -201,6 +208,14 @@ export const updateGoal = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Goal ID is required',
+      });
+    }
+    
     const validatedData = updateGoalSchema.parse(req.body);
 
     const goal = await prisma.goal.findFirst({
@@ -234,11 +249,11 @@ export const updateGoal = async (req: Request, res: Response) => {
 
     const response: ApiResponse<Goal> = {
       success: true,
-      data: updatedGoal,
+      data: updatedGoal as Goal,
       message: 'Goal updated successfully',
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -249,7 +264,7 @@ export const updateGoal = async (req: Request, res: Response) => {
     }
 
     console.error('Update goal error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -266,6 +281,13 @@ export const deleteGoal = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Goal ID is required',
+      });
+    }
 
     const goal = await prisma.goal.findFirst({
       where: {
@@ -290,10 +312,10 @@ export const deleteGoal = async (req: Request, res: Response) => {
       message: 'Goal deleted successfully',
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Delete goal error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -310,6 +332,14 @@ export const createMilestone = async (req: Request, res: Response) => {
     }
 
     const { goalId } = req.params;
+    
+    if (!goalId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Goal ID is required',
+      });
+    }
+    
     const validatedData = createMilestoneSchema.parse(req.body);
     const { title, order } = validatedData;
 
@@ -341,7 +371,7 @@ export const createMilestone = async (req: Request, res: Response) => {
       message: 'Milestone created successfully',
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -352,7 +382,7 @@ export const createMilestone = async (req: Request, res: Response) => {
     }
 
     console.error('Create milestone error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -369,6 +399,13 @@ export const toggleMilestone = async (req: Request, res: Response) => {
     }
 
     const { goalId, milestoneId } = req.params;
+
+    if (!goalId || !milestoneId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Goal ID and Milestone ID are required',
+      });
+    }
 
     const goal = await prisma.goal.findFirst({
       where: {
@@ -414,9 +451,15 @@ export const toggleMilestone = async (req: Request, res: Response) => {
     const completedMilestones = allMilestones.filter(m => m.completed).length;
     const progress = Math.round((completedMilestones / allMilestones.length) * 100);
 
+    // Automatically mark goal as completed when progress reaches 100%
+    const updateData: { progress: number; status?: GoalStatus } = { progress };
+    if (progress === 100) {
+      updateData.status = GoalStatus.COMPLETED;
+    }
+
     await prisma.goal.update({
       where: { id: goalId },
-      data: { progress },
+      data: updateData,
     });
 
     const response: ApiResponse = {
@@ -425,10 +468,10 @@ export const toggleMilestone = async (req: Request, res: Response) => {
       message: 'Milestone updated successfully',
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Toggle milestone error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -445,6 +488,14 @@ export const createNote = async (req: Request, res: Response) => {
     }
 
     const { goalId } = req.params;
+    
+    if (!goalId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Goal ID is required',
+      });
+    }
+    
     const validatedData = createNoteSchema.parse(req.body);
     const { content } = validatedData;
 
@@ -476,7 +527,7 @@ export const createNote = async (req: Request, res: Response) => {
       message: 'Note created successfully',
     };
 
-    res.status(201).json(response);
+    return res.status(201).json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -487,7 +538,7 @@ export const createNote = async (req: Request, res: Response) => {
     }
 
     console.error('Create note error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });

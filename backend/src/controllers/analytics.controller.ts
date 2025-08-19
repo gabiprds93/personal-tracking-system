@@ -87,11 +87,6 @@ export const getUserStats = async (req: Request, res: Response) => {
       },
     });
 
-    // Get badges count
-    const badgesEarned = await prisma.userBadge.count({
-      where: { userId },
-    });
-
     // Get user join date
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -108,7 +103,6 @@ export const getUserStats = async (req: Request, res: Response) => {
       todayTotal,
       habitsCompleted: completionsLast30Days,
       goalsCompleted,
-      badgesEarned,
       joinedDate: user?.createdAt.toISOString() || new Date().toISOString(),
     };
 
@@ -117,10 +111,10 @@ export const getUserStats = async (req: Request, res: Response) => {
       data: userStats,
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get user stats error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -160,13 +154,15 @@ export const getHabitTrends = async (req: Request, res: Response) => {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
       const dateKey = date.toISOString().split('T')[0];
-      dailyData[dateKey] = { completed: 0, total: 0 };
+      if (dateKey) {
+        dailyData[dateKey] = { completed: 0, total: 0 };
+      }
     }
 
     // Count completions per day
     completions.forEach(completion => {
       const dateKey = completion.completedAt.toISOString().split('T')[0];
-      if (dailyData[dateKey]) {
+      if (dateKey && dailyData[dateKey]) {
         dailyData[dateKey].completed++;
       }
     });
@@ -180,7 +176,9 @@ export const getHabitTrends = async (req: Request, res: Response) => {
     });
 
     Object.keys(dailyData).forEach(dateKey => {
-      dailyData[dateKey].total = activeHabits;
+      if (dailyData[dateKey]) {
+        dailyData[dateKey].total = activeHabits;
+      }
     });
 
     const trendData: HabitTrendData[] = Object.entries(dailyData).map(([date, data]) => ({
@@ -195,10 +193,10 @@ export const getHabitTrends = async (req: Request, res: Response) => {
       data: trendData,
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get habit trends error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -243,7 +241,9 @@ export const getCategoryDistribution = async (req: Request, res: Response) => {
       }
       // Count how many times this habit was completed in the last 30 days
       const habitCompletions = completions.filter(c => c.habitId === habit.id);
-      categoryData[habit.category] += habitCompletions.length;
+      if (habitCompletions) {
+        categoryData[habit.category]! += habitCompletions.length;
+      }
     }
 
     const distribution: CategoryData[] = Object.entries(categoryData).map(([name, value]) => ({
@@ -257,10 +257,10 @@ export const getCategoryDistribution = async (req: Request, res: Response) => {
       data: distribution,
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get category distribution error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -368,10 +368,10 @@ export const getKeyMetrics = async (req: Request, res: Response) => {
       data: metrics,
     };
 
-    res.json(response);
+    return res.json(response);
   } catch (error) {
     console.error('Get key metrics error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
     });
@@ -427,5 +427,5 @@ function getCategoryColor(category: string): string {
   ];
   
   const index = category.charCodeAt(0) % colors.length;
-  return colors[index];
+  return colors[index] || '#3B82F6'; // Fallback to first color
 }

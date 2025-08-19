@@ -24,11 +24,22 @@ const StatsGrid: React.FC<StatsGridProps> = ({
   className,
   ...props
 }) => {
+  // Format join date in a friendly way
+  const formatJoinDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return date.toLocaleDateString('es-ES', options);
+  };
+
   const stats = [
     {
       title: "Puntos Totales",
       value: userStats.totalPoints.toLocaleString(),
-      subtitle: `Desde ${userStats.joinedDate}`,
+      subtitle: `Desde ${formatJoinDate(userStats.joinedDate)}`,
       icon: TrendingUp,
     },
     {
