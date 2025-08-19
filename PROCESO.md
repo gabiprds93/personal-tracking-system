@@ -207,6 +207,7 @@ function useApi<T>(endpoint: string) {
 - ❌ **Sistema de amigos** y competencias
 - ❌ **Insignias** no está integrado al 100%
 - ❌ **Mejoras en la UI** (desktop y responsive)
+- ❌ **Metas** (UI y funcionalidad) no esta al 100%
 
 #### **Optimizaciones de Performance**
 - ❌ **Image optimization** avanzada
