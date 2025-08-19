@@ -3,19 +3,23 @@
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Trophy, Plus, Star, Flame, Loader2, AlertCircle } from "lucide-react"
+import { Trophy, Plus, Star, Flame, Loader2, AlertCircle, LogOut } from "lucide-react"
 import { useProfile } from "@/components/profile/hooks/use-profile"
+import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 
 export function Sidebar() {
   const { state } = useProfile();
   const { userStats, loading, error, currentLevel } = state;
+  const { logout } = useAuth();
 
   return (
     <div className="fixed left-0 top-0 h-full w-80 bg-background border-r border-border overflow-y-auto">
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
+      <div className="p-6 h-full flex flex-col">
+        {/* Main Content */}
+        <div className="flex-grow">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-8">
           <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
             <Trophy className="w-7 h-7 text-primary-foreground" />
           </div>
@@ -91,6 +95,19 @@ export function Sidebar() {
           </Link>
         </div>
 
+        </div>
+
+        {/* Logout Button */}
+        <div className="mt-auto pt-4 border-t border-border">
+          <Button 
+            variant="ghost" 
+            className="w-full gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+            onClick={logout}
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar Sesión
+          </Button>
+        </div>
 
       </div>
     </div>
