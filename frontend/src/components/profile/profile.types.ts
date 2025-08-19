@@ -18,6 +18,8 @@ export interface UserStats {
   completionRate: number;
   habitsCompleted: number;
   goalsCompleted: number;
+  todayCompleted: number;
+  todayTotal: number;
   joinedDate: string;
 }
 

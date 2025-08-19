@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DashboardState, DashboardActions, UseDashboardReturn, UserStats, Habit, Badge } from '../dashboard.types';
 import { dashboardApi } from '@/lib/api';
+import { useStatsRefresh } from '@/context/stats-context';
 
 const motivationalMessages = [
   "El progreso, no la perfección",
@@ -12,6 +13,16 @@ const motivationalMessages = [
 ];
 
 export const useDashboard = (): UseDashboardReturn => {
+  // Stats refresh context (optional)
+  let triggerRefresh: (() => void) | undefined;
+  try {
+    const context = useStatsRefresh();
+    triggerRefresh = context.triggerRefresh;
+  } catch (error) {
+    // Hook is being used outside of StatsProvider context
+    // This is fine, it will just not trigger global refresh
+  }
+
   const [state, setState] = useState<DashboardState>({
     mounted: false,
     currentMessageIndex: 0,
@@ -102,6 +113,11 @@ export const useDashboard = (): UseDashboardReturn => {
         
         // Refresh data to get updated stats
         await loadDashboardData();
+
+        // Trigger global stats refresh for sidebar and other components
+        if (triggerRefresh) {
+          triggerRefresh();
+        }
 
         // Hide celebration after 2 seconds
         setTimeout(() => {

@@ -3,23 +3,13 @@
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Trophy, Plus, Star, Flame } from "lucide-react"
+import { Trophy, Plus, Star, Flame, Loader2, AlertCircle } from "lucide-react"
+import { useProfile } from "@/components/profile/hooks/use-profile"
 import Link from "next/link"
 
 export function Sidebar() {
-  // Mock data - esto vendría de un contexto o estado global
-  const userStats = {
-    totalPoints: 2847,
-    level: 12,
-    currentStreak: 7,
-    todayCompleted: 4,
-    todayTotal: 6
-  }
-
-  const recentAchievements = [
-    { name: "Racha de Fuego", icon: "🔥", date: "Hace 2 días" },
-    { name: "Multitarea", icon: "⚡", date: "Hace 1 semana" }
-  ]
+  const { state } = useProfile();
+  const { userStats, loading, error, currentLevel } = state;
 
   return (
     <div className="fixed left-0 top-0 h-full w-80 bg-background border-r border-border overflow-y-auto">
@@ -31,34 +21,58 @@ export function Sidebar() {
           </div>
           <div>
             <h1 className="font-bold text-lg">Personal Tracker</h1>
-            <p className="text-sm text-muted-foreground">
-              Nivel {userStats.level} • {userStats.totalPoints} pts
-            </p>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span className="text-sm text-muted-foreground">Cargando...</span>
+              </div>
+            ) : error ? (
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-3 h-3 text-destructive" />
+                <span className="text-sm text-destructive">Error</span>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {currentLevel.name} • {userStats.totalPoints} pts
+              </p>
+            )}
           </div>
         </div>
 
         {/* Quick Stats */}
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm font-medium">Racha</span>
-                </div>
-                <span className="font-bold">{userStats.currentStreak} días</span>
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">Cargando estadísticas...</span>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Hoy</span>
-                </div>
-                <span className="font-bold">
-                  {userStats.todayCompleted}/{userStats.todayTotal}
-                </span>
+            ) : error ? (
+              <div className="flex items-center justify-center py-4">
+                <AlertCircle className="w-4 h-4 text-destructive" />
+                <span className="ml-2 text-sm text-destructive">Error al cargar</span>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm font-medium">Racha</span>
+                  </div>
+                  <span className="font-bold">{userStats.currentStreak} días</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">Hoy</span>
+                  </div>
+                  <span className="font-bold">
+                    {userStats.todayCompleted}/{userStats.todayTotal}
+                  </span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -77,23 +91,7 @@ export function Sidebar() {
           </Link>
         </div>
 
-        {/* Recent Achievements */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="font-medium mb-3 text-sm">Logros Recientes</h3>
-            <div className="space-y-2">
-              {recentAchievements.map((achievement, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <span className="text-lg">{achievement.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{achievement.name}</p>
-                    <p className="text-xs text-muted-foreground">{achievement.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   )

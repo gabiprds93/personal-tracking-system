@@ -4,6 +4,7 @@ import { Geist } from "next/font/google"
 import { Manrope } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
+import { StatsProvider } from "@/context/stats-context"
 import { ErrorBoundary } from "@/components/error-boundary"
 import LayoutWrapper from "@/components/layout-wrapper"
 import "./globals.css"
@@ -36,11 +37,13 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            <ErrorBoundary>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-            </ErrorBoundary>
+            <StatsProvider>
+              <ErrorBoundary>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+              </ErrorBoundary>
+            </StatsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

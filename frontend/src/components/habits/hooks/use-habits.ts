@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { habitsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
+import { useStatsRefresh } from '@/context/stats-context';
 import { Heart, Dumbbell, Brain, Book, Coffee, Droplets, Moon, Target, Briefcase } from 'lucide-react';
 import { 
   UseHabitsReturn, 
@@ -62,6 +63,16 @@ const transformBackendHabit = (backendHabit: BackendHabit): Habit => {
  */
 export const useHabits = (): UseHabitsReturn => {
   const { isAuthenticated } = useAuth();
+  
+  // Stats refresh context (optional)
+  let triggerRefresh: (() => void) | undefined;
+  try {
+    const context = useStatsRefresh();
+    triggerRefresh = context.triggerRefresh;
+  } catch (error) {
+    // Hook is being used outside of StatsProvider context
+    // This is fine, it will just not trigger global refresh
+  }
   const [loading, setLoading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -337,6 +348,11 @@ export const useHabits = (): UseHabitsReturn => {
         if (response.success) {
           // Reload habits to get updated data
           await loadHabits();
+          
+          // Trigger global stats refresh for sidebar and other components
+          if (triggerRefresh) {
+            triggerRefresh();
+          }
         }
       } catch (error) {
         console.error('Failed to toggle habit completion:', error);

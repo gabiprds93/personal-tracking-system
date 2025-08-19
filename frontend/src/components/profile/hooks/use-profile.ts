@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { analyticsApi } from '@/lib/api';
+import { useStatsRefresh } from '@/context/stats-context';
 import { 
   UseProfileReturn, 
   ProfileState, 
@@ -44,6 +45,16 @@ const weeklyChallenge: WeeklyChallengeData = {
 };
 
 export const useProfile = (): UseProfileReturn => {
+  // Stats refresh context (optional)
+  let refreshTrigger = 0;
+  try {
+    const context = useStatsRefresh();
+    refreshTrigger = context.refreshTrigger;
+  } catch (error) {
+    // Hook is being used outside of StatsProvider context
+    // This is fine, it will just not auto-refresh
+  }
+  
   // Loading and error states
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +68,8 @@ export const useProfile = (): UseProfileReturn => {
     completionRate: 0,
     habitsCompleted: 0,
     goalsCompleted: 0,
+    todayCompleted: 0,
+    todayTotal: 0,
     joinedDate: new Date().toISOString(),
   });
 
@@ -79,10 +92,10 @@ export const useProfile = (): UseProfileReturn => {
     }
   }, []);
 
-  // Load data on component mount
+  // Load data on component mount and when refresh is triggered
   useEffect(() => {
     loadProfileData();
-  }, [loadProfileData]);
+  }, [loadProfileData, refreshTrigger]);
 
   // Calculate current level info
   const getCurrentLevel = useCallback((points: number): Level => {
