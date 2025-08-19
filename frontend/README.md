@@ -322,10 +322,6 @@ userSchema // Esquema de validación para usuarios
 - Documentar componentes con JSDoc
 - Escribir código accesible (a11y)
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT.
-
 ## 🆘 Soporte
 
 Para reportar problemas o solicitar funcionalidades:

@@ -466,10 +466,6 @@ NEXT_PUBLIC_API_URL=https://tu-backend.railway.app/api
 - Documentar componentes
 - Escribir tests para nuevas funcionalidades
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
 ## 🆘 Soporte
 
 - **Issues**: Reportar problemas en GitHub Issues
